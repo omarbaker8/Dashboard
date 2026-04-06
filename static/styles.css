@@ -1,0 +1,1145 @@
+/* ==========================================================================
+    Widgets Dashboard CSS
+   ========================================================================== */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    background-color: #000;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    overflow-x: hidden;
+}
+
+/* --- Background Overlay (blur/dim) --- */
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+body > *:not(.bg-overlay) {
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Navigation Header --- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+header a {
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+header a:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+header a.active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- GridStack Full Integration --- */
+.grid-stack {
+    padding: 24px;
+    min-height: calc(100vh - 64px);
+}
+
+/* Smooth transitions for grid items */
+.grid-stack-item {
+    transition: none; /* GridStack handles animation internally */
+}
+
+.grid-stack-animate .grid-stack-item {
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* GridStack item content - the actual widget surface */
+.grid-stack-item-content {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    overflow: hidden;
+    border-radius: min(32px, 15cqmin);
+    inset: 8px !important; /* GridStack margin override for proper gap */
+}
+
+/* --- Widget Surface --- */
+.widget-item {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    container-type: size;
+    container-name: widget;
+    overflow: hidden;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+                box-shadow 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.widget-item:hover {
+    transform: scale(1.015);
+}
+
+.widget-item:active {
+    transform: scale(0.98);
+}
+
+/* --- Resize Handle: Exact Bottom-Right Corner --- */
+/* Hide ALL default handles and icons */
+.grid-stack-item > .ui-resizable-handle {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.grid-stack-item:hover > .ui-resizable-handle {
+    opacity: 1;
+}
+
+.grid-stack-item > .ui-resizable-handle::before,
+.grid-stack-item > .ui-resizable-handle::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* SE handle - exact bottom right corner */
+.grid-stack-item > .ui-resizable-se {
+    background: none !important;
+    background-image: none !important;
+    width: 20px !important;
+    height: 20px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    cursor: nwse-resize;
+    z-index: 10;
+}
+
+.grid-stack-item > .ui-resizable-se::before {
+    display: block !important;
+    content: '' !important;
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 0 0 2px 0;
+    transition: border-color 0.2s ease;
+}
+
+.grid-stack-item:hover > .ui-resizable-se::before {
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* S and E handles */
+.grid-stack-item > .ui-resizable-s {
+    bottom: 8px !important;
+    height: 6px !important;
+    left: 30px !important;
+    right: 30px !important;
+    width: auto !important;
+    cursor: ns-resize;
+}
+
+.grid-stack-item > .ui-resizable-e {
+    right: 8px !important;
+    width: 6px !important;
+    top: 30px !important;
+    bottom: 30px !important;
+    height: auto !important;
+    cursor: ew-resize;
+}
+
+/* Placeholder (drop target) */
+.grid-stack-placeholder > .placeholder-content {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1.5px dashed rgba(255, 255, 255, 0.15) !important;
+    border-radius: 24px;
+    margin: 8px;
+}
+
+/* --- Widget Inner Component Styles (proportional via cqmin) --- */
+
+/* Calendar Widget */
+.widget-calendar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    gap: 2cqmin;
+}
+
+.widget-calendar .cal-month {
+    font-size: 12cqmin;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.widget-calendar .cal-day {
+    font-size: 52cqmin;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+/* Rounded font face — macOS SF Pro Rounded */
+@font-face {
+    font-family: 'SFRounded';
+    src: local('.SFNSRounded'), local('SFProRounded-Regular'), local('.AppleSystemUIFontRounded-Regular');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'SFRounded';
+    src: local('.SFNSRounded-Semibold'), local('SFProRounded-Semibold'), local('.AppleSystemUIFontRounded-Semibold');
+    font-weight: 600;
+}
+@font-face {
+    font-family: 'SFRounded';
+    src: local('.SFNSRounded-Bold'), local('SFProRounded-Bold'), local('.AppleSystemUIFontRounded-Bold');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'SFRounded';
+    src: local('.SFNSRounded-Heavy'), local('SFProRounded-Heavy'), local('.AppleSystemUIFontRounded-Heavy');
+    font-weight: 800;
+}
+
+/* SF Compact — the condensed Apple Watch font */
+@font-face {
+    font-family: 'SFCompact';
+    src: local('.SFCompactDisplay-Regular'), local('SFCompactDisplay-Regular'), local('.AppleSystemUIFontCompact-Regular');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'SFCompact';
+    src: local('.SFCompactDisplay-Semibold'), local('SFCompactDisplay-Semibold'), local('.AppleSystemUIFontCompact-Semibold');
+    font-weight: 600;
+}
+@font-face {
+    font-family: 'SFCompact';
+    src: local('.SFCompactDisplay-Bold'), local('SFCompactDisplay-Bold'), local('.AppleSystemUIFontCompact-Bold');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'SFCompact';
+    src: local('.SFCompactRounded-Heavy'), local('SFCompactRounded-Heavy'), local('.SFCompactDisplay-Heavy');
+    font-weight: 800;
+}
+@font-face {
+    font-family: 'SFCompactRounded';
+    src: local('.SFCompactRounded-Regular'), local('SFCompactRounded-Regular');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'SFCompactRounded';
+    src: local('.SFCompactRounded-Semibold'), local('SFCompactRounded-Semibold');
+    font-weight: 600;
+}
+@font-face {
+    font-family: 'SFCompactRounded';
+    src: local('.SFCompactRounded-Bold'), local('SFCompactRounded-Bold');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'SFCompactRounded';
+    src: local('.SFCompactRounded-Heavy'), local('SFCompactRounded-Heavy');
+    font-weight: 800;
+}
+
+/* Clock Widget — rebuilt from scratch */
+.widget-clock {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Force 1:1 square */
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-height: 100%;
+    margin: auto;
+    font-family: 'SFCompactRounded', 'SFCompact', 'SFRounded', 'DIN Condensed', ui-rounded, system-ui, sans-serif;
+}
+
+/* Radial tick ring — thin spokes masked to a squircle donut */
+.widget-clock .clock-ticks {
+    position: absolute;
+    inset: 3cqmin;
+    border-radius: 22%;
+    pointer-events: none;
+    /* Tick length = padding thickness */
+    padding: 2.5cqmin;
+    /* 60 radial spokes: 1.2deg tick, 4.8deg gap = 6deg step = 60 ticks */
+    background: repeating-conic-gradient(
+        from 0deg,
+        rgba(255,255,255,0.15) 0deg 1.2deg,
+        transparent 1.2deg 6deg
+    );
+    /* Squircle donut: subtract content-box from padding-box */
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+
+.widget-clock .clock-city {
+    font-size: 10cqmin;
+    font-weight: 600;
+    color: inherit;
+    opacity: 0.55;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    z-index: 1;
+}
+
+.widget-clock .clock-time {
+    display: flex;
+    align-items: center;
+    font-size: 34cqmin;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    z-index: 1;
+    /* Widen the condensed font slightly */
+    transform: scaleX(1.06);
+}
+
+/* Colon as perfect circles */
+.widget-clock .clock-colon {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5cqmin;
+    margin: 0 0.5cqmin;
+    padding-bottom: 1.5cqmin;
+}
+
+.widget-clock .clock-colon-dot {
+    width: 3.2cqmin;
+    height: 3.2cqmin;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.widget-clock .clock-offset {
+    font-size: 9cqmin;
+    font-weight: 600;
+    color: inherit;
+    opacity: 0.45;
+    z-index: 1;
+}
+
+/* Sunrise/Sunset Widget */
+.widget-sunrise {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 6cqmin;
+    box-sizing: border-box;
+    font-family: 'SFRounded', 'SF Pro Rounded', ui-rounded, system-ui, sans-serif;
+    gap: 0;
+}
+
+.widget-sunrise .sunrise-header {
+    display: flex;
+    align-items: center;
+    gap: 2cqmin;
+    margin-bottom: 1cqmin;
+}
+
+.widget-sunrise .sunrise-icon svg {
+    width: 9cqmin;
+    height: 9cqmin;
+    display: block;
+}
+
+.widget-sunrise .sunrise-label {
+    font-size: 8cqmin;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.widget-sunrise .sunrise-time {
+    font-size: 28cqmin;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.widget-sunrise .sunrise-time small {
+    font-size: 48%;
+    font-weight: 600;
+    vertical-align: baseline;
+    letter-spacing: 0;
+}
+
+.widget-sunrise .sunrise-curve {
+    width: 72%;
+    margin: 3cqmin 0 2cqmin;
+    overflow: visible;
+}
+
+.widget-sunrise .sunrise-curve .arc {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.35);
+    stroke-width: 2;
+}
+
+.widget-sunrise .sunrise-curve .horizon {
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 1.5;
+}
+
+.widget-sunrise .sunrise-curve .sun-dot {
+    fill: #fff;
+    filter: drop-shadow(0 0 2px rgba(255,255,255,0.4));
+}
+
+.widget-sunrise .sunrise-sunset {
+    font-size: 8cqmin;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* --- Settings Page --- */
+.settings-layout {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+}
+
+.settings-section {
+    margin-bottom: 32px;
+}
+
+.settings-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 0 12px 0;
+}
+
+/* Card group (iOS-style grouped list) */
+.settings-card {
+    background: rgba(28, 28, 30, 0.7);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.settings-row {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease;
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+}
+
+.settings-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-row-label {
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.settings-row-detail {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Settings inputs */
+.settings-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    line-height: 1.5;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    resize: vertical;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.settings-input-group {
+    padding: 14px 18px;
+}
+
+.settings-input-label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* Button */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+.btn-primary {
+    background: #fff;
+    color: #000;
+}
+
+.btn-primary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+}
+
+.btn-subtle {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-subtle:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Widget style editor accordion */
+.widget-editor {
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.widget-editor:last-child {
+    border-bottom: none;
+}
+
+.widget-editor-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.widget-editor-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.widget-editor-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.widget-editor-id {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: "SF Mono", ui-monospace, monospace;
+}
+
+.widget-editor-body {
+    padding: 0 18px 18px;
+    display: none;
+}
+
+.widget-editor-body.open {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Preview */
+.settings-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 12px auto 16px;
+    container-type: size;
+    container-name: widget;
+}
+
+/* --- Custom Preset Dropdown --- */
+.preset-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.preset-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.preset-dropdown-trigger:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.preset-dropdown.open .preset-dropdown-trigger {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px 10px 0 0;
+}
+
+.preset-dropdown-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.preset-dropdown-chevron {
+    flex-shrink: 0;
+    transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.preset-dropdown.open .preset-dropdown-chevron {
+    transform: rotate(180deg);
+}
+
+.preset-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.preset-dropdown-menu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.preset-dropdown.open .preset-dropdown-menu {
+    display: block;
+    animation: dropdownIn 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.preset-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: background 0.12s ease;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+}
+
+.preset-option:last-child {
+    border-bottom: none;
+}
+
+.preset-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.preset-option:active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.preset-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Wallpaper Gallery --- */
+.wallpaper-gallery {
+    max-height: 520px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.wallpaper-gallery::-webkit-scrollbar {
+    width: 4px;
+}
+
+.wallpaper-gallery::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.wallpaper-gallery::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.wallpaper-gallery::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.wallpaper-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 2px;
+    padding: 2px;
+}
+
+.wallpaper-thumb {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.3);
+    transition: opacity 0.2s ease;
+}
+
+.wallpaper-thumb:hover {
+    opacity: 0.85;
+}
+
+.wallpaper-thumb:active {
+    opacity: 0.6;
+}
+
+.wallpaper-thumb.selected {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+    opacity: 1;
+}
+
+.wallpaper-thumb.selected .wallpaper-name {
+    opacity: 1;
+}
+
+.wallpaper-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.wallpaper-thumb:hover img {
+    transform: scale(1.05);
+}
+
+.wallpaper-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 8px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.wallpaper-thumb:hover .wallpaper-name {
+    opacity: 1;
+}
+
+.wallpaper-loading {
+    padding: 40px 18px;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 500;
+}
+
+/* --- Wallpaper Options Panel --- */
+.wallpaper-options {
+    padding: 0 0 4px;
+}
+
+.wallpaper-options .control-grid {
+    padding: 0 18px 10px;
+}
+
+.wallpaper-options-preview {
+    width: 100%;
+    height: 120px;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgba(0,0,0,0.3);
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+/* --- Segmented Control (iOS-style) --- */
+.seg-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.seg-btn {
+    flex: 1;
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.seg-btn:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.seg-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+/* --- Range Slider --- */
+.range-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.range-input {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.range-input::-webkit-slider-thumb:active {
+    transform: scale(1.15);
+}
+
+.range-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: "SF Mono", ui-monospace, monospace;
+    min-width: 36px;
+    text-align: right;
+}
+
+/* --- Color Picker --- */
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+}
+
+.color-hex {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: "SF Mono", ui-monospace, monospace;
+}
+
+/* --- Control Layout --- */
+.control-section {
+    padding: 14px 18px 12px;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.04);
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* --- Theme Chips --- */
+.theme-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.theme-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 5px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.theme-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.theme-chip.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.theme-chip-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- Native Select (for font) --- */
+.settings-native-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(0, 0, 0, 0.25);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 10px 32px 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.35)' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.settings-native-select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.settings-native-select option {
+    background: #1c1c1e;
+    color: #fff;
+}
+
+/* --- Collapse / Expand --- */
+.collapse-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.collapse-chevron {
+    transition: transform 0.2s ease;
+}
+
+.settings-input-group.expanded .collapse-chevron {
+    transform: rotate(180deg);
+}
+
+.collapse-body {
+    display: none;
+}
+
+.settings-input-group.expanded .collapse-body {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.collapse-inline {
+    display: none;
+    width: 100%;
+}
+
+.collapse-inline.expanded {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Utility --- */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body style="background: {{ config.background }};">
+    <header>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/settings" class="active">Settings</a>
+    </header>
+
+    <div class="settings-layout">
+
+        <!-- ============================================================ -->
+        <!-- BACKGROUND                                                    -->
+        <!-- ============================================================ -->
+
+        <!-- Gradient Presets -->
+        <div class="settings-section">
+            <div class="settings-section-title">Background</div>
+            <div class="settings-card">
+                <div class="settings-input-group">
+                    <label class="settings-input-label">Gradient Presets</label>
+                    <div class="preset-dropdown" id="preset-dropdown">
+                        <div class="preset-dropdown-trigger" id="preset-trigger">
+                            <span class="preset-dropdown-label">Choose a preset...</span>
+                            <svg class="preset-dropdown-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="preset-dropdown-menu" id="preset-menu">
+                            <div class="preset-option" data-value="#0a0a0a"><span class="preset-swatch" style="background:#0a0a0a;"></span><span>Pure Dark</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0c0c0c, #1a1a2e);"></span><span>Deep Navy</span></div>
+                            <div class="preset-option" data-value="linear-gradient(180deg, #1b1b1b 0%, #2d1b1b 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #1b1b1b, #2d1b1b);"></span><span>Warm Dark</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0f0f0f 0%, #1a2a1a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0f0f0f, #1a2a1a);"></span><span>Forest</span></div>
+                            <div class="preset-option" data-value="linear-gradient(160deg, #0d0d0d 0%, #1a1a2e 40%, #16213e 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0d0d0d, #1a1a2e, #16213e);"></span><span>Midnight</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0a0a0a 0%, #2d1f3d 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0a0a0a, #2d1f3d);"></span><span>Plum</span></div>
+                            <div class="preset-option" data-value="linear-gradient(180deg, #0e0e0e 0%, #1a1a1a 50%, #2a1a0a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0e0e0e, #2a1a0a);"></span><span>Ember</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0c1015 0%, #1b2838 50%, #0c1015 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0c1015, #1b2838);"></span><span>Steel</span></div>
+                            <div class="preset-option" data-value="linear-gradient(160deg, #0a0a0a 0%, #1a0a1a 50%, #0a0a1a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #1a0a1a, #0a0a1a);"></span><span>Cosmos</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0d0d0d 0%, #0d1b1e 50%, #0a1a1a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0d0d0d, #0d1b1e);"></span><span>Ocean</span></div>
+                            <div class="preset-option" data-value="linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 100%)"><span class="preset-swatch" style="background:#1a1a1a;"></span><span>Graphite</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0a0a0a 0%, #2a1a1a 50%, #0a0a0a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0a0a0a, #2a1a1a);"></span><span>Rosewood</span></div>
+                            <div class="preset-option" data-value="linear-gradient(160deg, #080808 0%, #121212 50%, #1a1a0f 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #080808, #1a1a0f);"></span><span>Brass</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #141414 0%, #1a1a1a 50%, #0d0d0d 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #141414, #0d0d0d);"></span><span>Charcoal</span></div>
+                            <div class="preset-option" data-value="linear-gradient(180deg, #0a0a0a 0%, #0a0f1a 50%, #141e28 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0a0f1a, #141e28);"></span><span>Arctic Night</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0f0a0a 0%, #1a0f0a 50%, #0a0a0a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0f0a0a, #1a0f0a);"></span><span>Sienna</span></div>
+                            <div class="preset-option" data-value="linear-gradient(160deg, #0a0a0a 0%, #0a1a14 60%, #0a0a0a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0a0a0a, #0a1a14);"></span><span>Jade</span></div>
+                            <div class="preset-option" data-value="linear-gradient(135deg, #0e0e10 0%, #1c1826 50%, #0e0e10 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0e0e10, #1c1826);"></span><span>Obsidian</span></div>
+                            <div class="preset-option" data-value="linear-gradient(180deg, #0a0a0a 0%, #1a1410 60%, #0a0a0a 100%)"><span class="preset-swatch" style="background:linear-gradient(135deg, #0a0a0a, #1a1410);"></span><span>Tobacco</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Custom CSS (collapsed) -->
+                <div class="settings-input-group" style="border-top: 0.5px solid rgba(255,255,255,0.06);">
+                    <div class="collapse-trigger" onclick="this.parentElement.classList.toggle('expanded')">
+                        <label class="settings-input-label" style="margin:0; cursor:pointer;">Custom CSS</label>
+                        <svg class="collapse-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="collapse-body">
+                        <form method="POST" action="/settings" style="margin-top:10px;">
+                            <input type="hidden" name="action" value="update_background">
+                            <textarea class="settings-input" name="background_css" rows="2" placeholder="#0a0a0a or linear-gradient(...)">{{ config.background }}</textarea>
+                            <div style="padding-top:8px;"><button type="submit" class="btn btn-subtle">Apply</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallpapers -->
+        <div class="settings-section">
+            <div class="settings-section-title">Wallpapers</div>
+            <div class="settings-card">
+                <div class="settings-input-group">
+                    <input type="text" class="settings-input" id="wallpaper-search" placeholder="Search wallpapers..." style="margin-bottom:0;">
+                </div>
+                <div class="wallpaper-gallery" id="wallpaper-gallery">
+                    <div class="wallpaper-loading">Loading wallpapers...</div>
+                </div>
+                <!-- Wallpaper Options (shown after selection) -->
+                <div class="wallpaper-options" id="wallpaper-options" style="display:none;">
+                    <div class="settings-input-group" style="border-top: 0.5px solid rgba(255,255,255,0.06); padding-bottom:0;">
+                        <label class="settings-input-label">Wallpaper Settings</label>
+                        <div class="wallpaper-options-preview" id="wp-preview"></div>
+                    </div>
+                    <div class="control-grid">
+                        <div class="control-item">
+                            <label class="settings-input-label">Size</label>
+                            <div class="seg-control" id="wp-size">
+                                <button class="seg-btn active" data-val="cover">Cover</button>
+                                <button class="seg-btn" data-val="contain">Contain</button>
+                                <button class="seg-btn" data-val="auto">Tile</button>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label class="settings-input-label">Position</label>
+                            <div class="seg-control" id="wp-position">
+                                <button class="seg-btn" data-val="top">Top</button>
+                                <button class="seg-btn active" data-val="center">Center</button>
+                                <button class="seg-btn" data-val="bottom">Bottom</button>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label class="settings-input-label">Scroll</label>
+                            <div class="seg-control" id="wp-attachment">
+                                <button class="seg-btn active" data-val="fixed">Fixed</button>
+                                <button class="seg-btn" data-val="scroll">Scroll</button>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label class="settings-input-label">Blur</label>
+                            <div class="range-row">
+                                <input type="range" class="range-input" id="wp-blur" min="0" max="30" value="0">
+                                <span class="range-val" id="wp-blur-val">0px</span>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label class="settings-input-label">Dim</label>
+                            <div class="range-row">
+                                <input type="range" class="range-input" id="wp-dim" min="0" max="80" value="0">
+                                <span class="range-val" id="wp-dim-val">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-input-group" style="padding-top:8px;">
+                        <button class="btn btn-primary" id="wp-apply" style="width:100%;">Apply Wallpaper</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- WIDGET STYLING                                                -->
+        <!-- ============================================================ -->
+
+        <div class="settings-section">
+            <div class="settings-section-title">Widget Styles</div>
+
+            {% for widget in widgets %}
+            <div class="settings-card" style="margin-bottom:12px;" id="widget-card-{{ loop.index0 }}">
+                <!-- Header -->
+                <div class="widget-editor-header" onclick="toggleEditor(this)">
+                    <span class="widget-editor-name">{{ widget.id }}</span>
+                    <span class="widget-editor-id">{{ widget.w }}&times;{{ widget.h }}</span>
+                </div>
+                <div class="widget-editor-body">
+                    <!-- Live Preview -->
+                    <div class="settings-preview" id="preview-{{ loop.index0 }}" style="{{ widget.css }}">
+                        {{ widget.content | safe }}
+                    </div>
+
+                    <!-- Theme Presets -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Theme</label>
+                        <div class="theme-grid" data-idx="{{ loop.index0 }}">
+                            <div class="theme-chip active" data-theme="custom" title="Current">
+                                <span class="theme-chip-swatch" style="background:rgba(59,22,22,0.85);"></span><span>Current</span>
+                            </div>
+                            <div class="theme-chip" data-theme="dark" title="Dark">
+                                <span class="theme-chip-swatch" style="background:#1c1c1e;"></span><span>Dark</span>
+                            </div>
+                            <div class="theme-chip" data-theme="light" title="Light">
+                                <span class="theme-chip-swatch" style="background:#f2f2f7;"></span><span>Light</span>
+                            </div>
+                            <div class="theme-chip" data-theme="glass" title="Glass">
+                                <span class="theme-chip-swatch" style="background:linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));border:1px solid rgba(255,255,255,0.15);"></span><span>Glass</span>
+                            </div>
+                            <div class="theme-chip" data-theme="frost" title="Frost">
+                                <span class="theme-chip-swatch" style="background:rgba(200,220,255,0.12);border:1px solid rgba(200,220,255,0.2);"></span><span>Frost</span>
+                            </div>
+                            <div class="theme-chip" data-theme="noir" title="Noir">
+                                <span class="theme-chip-swatch" style="background:#000;"></span><span>Noir</span>
+                            </div>
+                            <div class="theme-chip" data-theme="warm" title="Warm">
+                                <span class="theme-chip-swatch" style="background:#3b1919;"></span><span>Warm</span>
+                            </div>
+                            <div class="theme-chip" data-theme="ocean" title="Ocean">
+                                <span class="theme-chip-swatch" style="background:#0a1a2e;"></span><span>Ocean</span>
+                            </div>
+                            <div class="theme-chip" data-theme="forest" title="Forest">
+                                <span class="theme-chip-swatch" style="background:#0a1e0a;"></span><span>Forest</span>
+                            </div>
+                            <div class="theme-chip" data-theme="plum" title="Plum">
+                                <span class="theme-chip-swatch" style="background:#1e0a2e;"></span><span>Plum</span>
+                            </div>
+                            <div class="theme-chip" data-theme="rose" title="Rose">
+                                <span class="theme-chip-swatch" style="background:#2e0a1a;"></span><span>Rose</span>
+                            </div>
+                            <div class="theme-chip" data-theme="sand" title="Sand">
+                                <span class="theme-chip-swatch" style="background:#2a2218;"></span><span>Sand</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colors -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Colors</label>
+                        <div class="control-grid">
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Background</label>
+                                <div class="color-row">
+                                    <input type="color" class="color-input" id="bg-color-{{ loop.index0 }}" value="#3b1919" data-idx="{{ loop.index0 }}" data-prop="bg">
+                                    <span class="color-hex" id="bg-hex-{{ loop.index0 }}">#3b1919</span>
+                                </div>
+                            </div>
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Text</label>
+                                <div class="color-row">
+                                    <input type="color" class="color-input" id="text-color-{{ loop.index0 }}" value="#dbbfbf" data-idx="{{ loop.index0 }}" data-prop="text">
+                                    <span class="color-hex" id="text-hex-{{ loop.index0 }}">#dbbfbf</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opacity & Blur -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Effects</label>
+                        <div class="control-grid">
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Opacity</label>
+                                <div class="range-row">
+                                    <input type="range" class="range-input" id="opacity-{{ loop.index0 }}" min="10" max="100" value="85" data-idx="{{ loop.index0 }}" data-prop="opacity">
+                                    <span class="range-val" id="opacity-val-{{ loop.index0 }}">85%</span>
+                                </div>
+                            </div>
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Backdrop Blur</label>
+                                <div class="range-row">
+                                    <input type="range" class="range-input" id="blur-{{ loop.index0 }}" min="0" max="60" value="25" data-idx="{{ loop.index0 }}" data-prop="blur">
+                                    <span class="range-val" id="blur-val-{{ loop.index0 }}">25px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Border Radius -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Shape</label>
+                        <div class="control-grid">
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Border Radius</label>
+                                <div class="range-row">
+                                    <input type="range" class="range-input" id="radius-{{ loop.index0 }}" min="0" max="50" value="24" data-idx="{{ loop.index0 }}" data-prop="radius">
+                                    <span class="range-val" id="radius-val-{{ loop.index0 }}">24px</span>
+                                </div>
+                            </div>
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;">Border</label>
+                                <div class="seg-control" id="border-{{ loop.index0 }}" data-idx="{{ loop.index0 }}">
+                                    <button class="seg-btn" data-val="none">None</button>
+                                    <button class="seg-btn active" data-val="subtle">Subtle</button>
+                                    <button class="seg-btn" data-val="visible">Visible</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Font -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Typography</label>
+                        <div class="control-grid">
+                            <div class="control-item" style="grid-column: 1 / -1;">
+                                <label class="settings-input-label" style="font-size:11px;">Font Family</label>
+                                <select class="settings-native-select" id="font-{{ loop.index0 }}" data-idx="{{ loop.index0 }}">
+                                    <option value="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" selected>SF Pro (System)</option>
+                                    <option value="'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace">SF Mono</option>
+                                    <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica Neue</option>
+                                    <option value="Georgia, 'Times New Roman', serif">Georgia</option>
+                                    <option value="'Avenir Next', Avenir, sans-serif">Avenir Next</option>
+                                    <option value="'Futura', sans-serif">Futura</option>
+                                    <option value="'Gill Sans', sans-serif">Gill Sans</option>
+                                    <option value="'Palatino Linotype', Palatino, serif">Palatino</option>
+                                    <option value="'Courier New', Courier, monospace">Courier</option>
+                                    <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                                    <option value="system-ui, sans-serif">System UI</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shadow -->
+                    <div class="control-section">
+                        <label class="settings-input-label">Shadow</label>
+                        <div class="seg-control" id="shadow-{{ loop.index0 }}" data-idx="{{ loop.index0 }}">
+                            <button class="seg-btn" data-val="none">None</button>
+                            <button class="seg-btn" data-val="soft">Soft</button>
+                            <button class="seg-btn active" data-val="medium">Medium</button>
+                            <button class="seg-btn" data-val="heavy">Heavy</button>
+                        </div>
+                    </div>
+
+                    <!-- Save -->
+                    <form method="POST" action="/settings" id="form-{{ loop.index0 }}">
+                        <input type="hidden" name="action" value="update_widget">
+                        <input type="hidden" name="id" value="{{ widget.id }}">
+                        <input type="hidden" name="css" id="css-output-{{ loop.index0 }}" value="{{ widget.css }}">
+                    </form>
+                    <div class="control-section" style="display:flex; gap:8px;">
+                        <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
+                        <button class="btn btn-subtle" onclick="this.nextElementSibling.classList.toggle('expanded')" style="flex:1;">Raw CSS</button>
+                        <div class="collapse-inline">
+                            <textarea class="settings-input" id="raw-css-{{ loop.index0 }}" rows="3" style="margin-top:8px; font-size:12px;">{{ widget.css }}</textarea>
+                            <button class="btn btn-subtle" onclick="applyRawCSS({{ loop.index0 }})" style="margin-top:4px;">Apply Raw</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not widgets %}
+            <div class="settings-card">
+                <div class="settings-row">
+                    <span class="settings-row-label" style="color: rgba(255,255,255,0.35);">No widgets found</span>
+                    <span class="settings-row-detail">Add folders to /widgets/</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Hidden forms -->
+    <form method="POST" action="/settings" id="wallpaper-form" style="display:none;">
+        <input type="hidden" name="action" value="update_background">
+        <input type="hidden" name="background_css" id="wallpaper-bg-value" value="">
+    </form>
+    <form method="POST" action="/settings" id="preset-form" style="display:none;">
+        <input type="hidden" name="action" value="update_background">
+        <input type="hidden" name="background_css" id="preset-bg-value" value="">
+    </form>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ============================================================
+        // Widget Editor Toggle
+        // ============================================================
+        window.toggleEditor = function(header) {
+            var body = header.nextElementSibling;
+            body.classList.toggle('open');
+        };
+
+        // ============================================================
+        // Preset Dropdown
+        // ============================================================
+        var dropdown = document.getElementById('preset-dropdown');
+        var trigger = document.getElementById('preset-trigger');
+        document.getElementById('preset-trigger').addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('open');
+        });
+        document.addEventListener('click', function() { dropdown.classList.remove('open'); });
+        document.getElementById('preset-menu').addEventListener('click', function(e) {
+            var opt = e.target.closest('.preset-option');
+            if (!opt) return;
+            document.getElementById('preset-bg-value').value = opt.getAttribute('data-value');
+            dropdown.classList.remove('open');
+            document.getElementById('preset-form').submit();
+        });
+
+        // ============================================================
+        // Wallpaper Gallery
+        // ============================================================
+        var allWallpapers = [];
+        var selectedWpUrl = null;
+
+        fetch('/api/wallpapers')
+            .then(function(r) { return r.json(); })
+            .then(function(data) { allWallpapers = data; renderGallery(data); })
+            .catch(function() {
+                document.getElementById('wallpaper-gallery').innerHTML = '<div class="wallpaper-loading">Could not load wallpapers</div>';
+            });
+
+        function renderGallery(items) {
+            var g = document.getElementById('wallpaper-gallery');
+            if (!items.length) { g.innerHTML = '<div class="wallpaper-loading">No wallpapers found</div>'; return; }
+            var h = '<div class="wallpaper-grid">';
+            for (var i = 0; i < items.length; i++) {
+                var w = items[i];
+                h += '<div class="wallpaper-thumb" data-url="' + w.url + '" title="' + w.name + '">';
+                h += '<img src="' + w.thumb + '" alt="' + w.name + '" loading="lazy">';
+                h += '<span class="wallpaper-name">' + w.name + '</span>';
+                h += '</div>';
+            }
+            h += '</div>';
+            g.innerHTML = h;
+            // Attach click handlers
+            g.querySelectorAll('.wallpaper-thumb').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    selectWallpaper(this.getAttribute('data-url'), this);
+                });
+            });
+        }
+
+        function selectWallpaper(url, el) {
+            selectedWpUrl = url;
+            // Highlight selected
+            document.querySelectorAll('.wallpaper-thumb').forEach(function(t) { t.classList.remove('selected'); });
+            if (el) el.classList.add('selected');
+            // Show options panel
+            var opts = document.getElementById('wallpaper-options');
+            opts.style.display = 'block';
+            // Update preview
+            document.getElementById('wp-preview').style.backgroundImage = "url('" + url + "')";
+            updateWpPreview();
+        }
+
+        // Wallpaper option controls
+        function getWpVal(id) {
+            var el = document.getElementById(id);
+            var active = el.querySelector('.seg-btn.active');
+            return active ? active.getAttribute('data-val') : '';
+        }
+
+        function updateWpPreview() {
+            if (!selectedWpUrl) return;
+            var prev = document.getElementById('wp-preview');
+            var size = getWpVal('wp-size');
+            var pos = getWpVal('wp-position');
+            prev.style.backgroundImage = "url('" + selectedWpUrl + "')";
+            prev.style.backgroundSize = size === 'auto' ? 'auto' : size;
+            prev.style.backgroundPosition = pos;
+            prev.style.backgroundRepeat = size === 'auto' ? 'repeat' : 'no-repeat';
+            var blur = document.getElementById('wp-blur').value;
+            var dim = document.getElementById('wp-dim').value;
+            document.getElementById('wp-blur-val').textContent = blur + 'px';
+            document.getElementById('wp-dim-val').textContent = dim + '%';
+            prev.style.filter = blur > 0 ? 'blur(' + blur + 'px)' : '';
+            prev.style.opacity = 1 - (dim / 100);
+        }
+
+        // Segmented control click handlers
+        document.querySelectorAll('.seg-control').forEach(function(ctrl) {
+            ctrl.addEventListener('click', function(e) {
+                var btn = e.target.closest('.seg-btn');
+                if (!btn) return;
+                ctrl.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                // If wallpaper control, update preview
+                if (ctrl.id && ctrl.id.startsWith('wp-')) updateWpPreview();
+            });
+        });
+
+        document.getElementById('wp-blur').addEventListener('input', updateWpPreview);
+        document.getElementById('wp-dim').addEventListener('input', updateWpPreview);
+
+        // Apply wallpaper with options
+        document.getElementById('wp-apply').addEventListener('click', function() {
+            if (!selectedWpUrl) return;
+            var size = getWpVal('wp-size');
+            var pos = getWpVal('wp-position');
+            var attach = getWpVal('wp-attachment');
+            var repeat = size === 'auto' ? 'repeat' : 'no-repeat';
+            var bgSize = size === 'auto' ? 'auto' : size;
+            var blur = parseInt(document.getElementById('wp-blur').value);
+            var dim = parseInt(document.getElementById('wp-dim').value);
+
+            var css = "url('" + selectedWpUrl + "') " + repeat + " " + pos + " / " + bgSize + " " + attach;
+            // Store blur/dim as separate config values
+            document.getElementById('wallpaper-bg-value').value = css;
+            // Add blur/dim as data attributes in the form
+            var form = document.getElementById('wallpaper-form');
+            // Remove old hidden fields
+            form.querySelectorAll('.wp-extra').forEach(function(e) { e.remove(); });
+            if (blur > 0) {
+                var inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'bg_blur'; inp.value = blur; inp.className = 'wp-extra';
+                form.appendChild(inp);
+            }
+            if (dim > 0) {
+                var inp2 = document.createElement('input');
+                inp2.type = 'hidden'; inp2.name = 'bg_dim'; inp2.value = dim; inp2.className = 'wp-extra';
+                form.appendChild(inp2);
+            }
+            form.submit();
+        });
+
+        document.getElementById('wallpaper-search').addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            renderGallery(!q ? allWallpapers : allWallpapers.filter(function(w) {
+                return w.name.toLowerCase().indexOf(q) !== -1;
+            }));
+        });
+
+        // ============================================================
+        // Widget Style Engine
+        // ============================================================
+        var THEMES = {
+            dark: {
+                bg: '#1c1c1e', text: '#ffffff', opacity: 90, blur: 20, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            light: {
+                bg: '#f2f2f7', text: '#1c1c1e', opacity: 92, blur: 20, radius: 24,
+                border: 'subtle', shadow: 'soft', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            glass: {
+                bg: '#808080', text: '#ffffff', opacity: 15, blur: 40, radius: 28,
+                border: 'visible', shadow: 'soft', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            frost: {
+                bg: '#c8dcff', text: '#ffffff', opacity: 12, blur: 50, radius: 28,
+                border: 'visible', shadow: 'soft', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            noir: {
+                bg: '#000000', text: '#ffffff', opacity: 95, blur: 0, radius: 20,
+                border: 'none', shadow: 'heavy', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            warm: {
+                bg: '#3b1919', text: '#dbbfbf', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            ocean: {
+                bg: '#0a1a2e', text: '#b8d4e8', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            forest: {
+                bg: '#0a1e0a', text: '#b8d8b8', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            plum: {
+                bg: '#1e0a2e', text: '#d4b8e8', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            rose: {
+                bg: '#2e0a1a', text: '#e8b8c8', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            },
+            sand: {
+                bg: '#2a2218', text: '#d8ccb0', opacity: 85, blur: 25, radius: 24,
+                border: 'subtle', shadow: 'medium', font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+            }
+        };
+
+        var SHADOWS = {
+            none: 'none',
+            soft: '0 4px 16px rgba(0,0,0,0.15)',
+            medium: '0 10px 40px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.06)',
+            heavy: '0 20px 60px rgba(0,0,0,0.5), inset 0 0.5px 0 rgba(255,255,255,0.06)'
+        };
+
+        var BORDERS = {
+            none: 'none',
+            subtle: '0.5px solid rgba(255,255,255,0.08)',
+            visible: '1px solid rgba(255,255,255,0.18)'
+        };
+
+        function hexToRgba(hex, alpha) {
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha / 100) + ')';
+        }
+
+        function buildCSS(idx) {
+            var bg = document.getElementById('bg-color-' + idx).value;
+            var text = document.getElementById('text-color-' + idx).value;
+            var opacity = parseInt(document.getElementById('opacity-' + idx).value);
+            var blur = parseInt(document.getElementById('blur-' + idx).value);
+            var radius = parseInt(document.getElementById('radius-' + idx).value);
+            var font = document.getElementById('font-' + idx).value;
+
+            var borderCtrl = document.getElementById('border-' + idx);
+            var borderActive = borderCtrl.querySelector('.seg-btn.active');
+            var borderVal = borderActive ? borderActive.getAttribute('data-val') : 'subtle';
+
+            var shadowCtrl = document.getElementById('shadow-' + idx);
+            var shadowActive = shadowCtrl.querySelector('.seg-btn.active');
+            var shadowVal = shadowActive ? shadowActive.getAttribute('data-val') : 'medium';
+
+            var css = '';
+            css += 'background-color: ' + hexToRgba(bg, opacity) + '; ';
+            if (blur > 0) {
+                css += 'backdrop-filter: blur(' + blur + 'px); ';
+                css += '-webkit-backdrop-filter: blur(' + blur + 'px); ';
+            }
+            css += 'color: ' + text + '; ';
+            css += 'border-radius: min(' + radius + 'px, 15cqmin); ';
+            css += 'box-shadow: ' + SHADOWS[shadowVal] + '; ';
+            if (borderVal !== 'none') css += 'border: ' + BORDERS[borderVal] + '; ';
+            css += 'font-family: ' + font + ';';
+
+            return css;
+        }
+
+        function updatePreview(idx) {
+            var css = buildCSS(idx);
+            var preview = document.getElementById('preview-' + idx);
+            preview.setAttribute('style', css);
+            document.getElementById('css-output-' + idx).value = css;
+            document.getElementById('raw-css-' + idx).value = css;
+        }
+
+        function setControls(idx, theme) {
+            document.getElementById('bg-color-' + idx).value = theme.bg;
+            document.getElementById('bg-hex-' + idx).textContent = theme.bg;
+            document.getElementById('text-color-' + idx).value = theme.text;
+            document.getElementById('text-hex-' + idx).textContent = theme.text;
+            document.getElementById('opacity-' + idx).value = theme.opacity;
+            document.getElementById('opacity-val-' + idx).textContent = theme.opacity + '%';
+            document.getElementById('blur-' + idx).value = theme.blur;
+            document.getElementById('blur-val-' + idx).textContent = theme.blur + 'px';
+            document.getElementById('radius-' + idx).value = theme.radius;
+            document.getElementById('radius-val-' + idx).textContent = theme.radius + 'px';
+
+            // Font
+            var fontSel = document.getElementById('font-' + idx);
+            fontSel.value = theme.font;
+
+            // Border segmented
+            var borderCtrl = document.getElementById('border-' + idx);
+            borderCtrl.querySelectorAll('.seg-btn').forEach(function(b) {
+                b.classList.toggle('active', b.getAttribute('data-val') === theme.border);
+            });
+
+            // Shadow segmented
+            var shadowCtrl = document.getElementById('shadow-' + idx);
+            shadowCtrl.querySelectorAll('.seg-btn').forEach(function(b) {
+                b.classList.toggle('active', b.getAttribute('data-val') === theme.shadow);
+            });
+
+            updatePreview(idx);
+        }
+
+        // Theme chip clicks
+        document.querySelectorAll('.theme-grid').forEach(function(grid) {
+            grid.addEventListener('click', function(e) {
+                var chip = e.target.closest('.theme-chip');
+                if (!chip) return;
+                var themeName = chip.getAttribute('data-theme');
+                var idx = parseInt(grid.getAttribute('data-idx'));
+                if (themeName === 'custom') return; // keep current
+                grid.querySelectorAll('.theme-chip').forEach(function(c) { c.classList.remove('active'); });
+                chip.classList.add('active');
+                if (THEMES[themeName]) setControls(idx, THEMES[themeName]);
+            });
+        });
+
+        // Range input listeners
+        document.querySelectorAll('input[type="range"][data-idx]').forEach(function(inp) {
+            inp.addEventListener('input', function() {
+                var idx = this.getAttribute('data-idx');
+                var prop = this.getAttribute('data-prop');
+                var suffix = prop === 'opacity' ? '%' : 'px';
+                document.getElementById(prop + '-val-' + idx).textContent = this.value + suffix;
+                updatePreview(idx);
+            });
+        });
+
+        // Color input listeners
+        document.querySelectorAll('input[type="color"][data-idx]').forEach(function(inp) {
+            inp.addEventListener('input', function() {
+                var idx = this.getAttribute('data-idx');
+                var prop = this.getAttribute('data-prop');
+                var hexEl = document.getElementById(prop === 'bg' ? 'bg-hex-' + idx : 'text-hex-' + idx);
+                hexEl.textContent = this.value;
+                updatePreview(idx);
+            });
+        });
+
+        // Font select listeners
+        document.querySelectorAll('select[data-idx]').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                updatePreview(this.getAttribute('data-idx'));
+            });
+        });
+
+        // Segmented controls for widget styling (border, shadow)
+        document.querySelectorAll('.control-section .seg-control[data-idx]').forEach(function(ctrl) {
+            ctrl.addEventListener('click', function(e) {
+                var btn = e.target.closest('.seg-btn');
+                if (!btn) return;
+                ctrl.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                updatePreview(ctrl.getAttribute('data-idx'));
+            });
+        });
+
+        // Save widget
+        window.saveWidget = function(idx) {
+            var css = buildCSS(idx);
+            document.getElementById('css-output-' + idx).value = css;
+            document.getElementById('form-' + idx).submit();
+        };
+
+        // Apply raw CSS
+        window.applyRawCSS = function(idx) {
+            var raw = document.getElementById('raw-css-' + idx).value;
+            document.getElementById('preview-' + idx).setAttribute('style', raw);
+            document.getElementById('css-output-' + idx).value = raw;
+            document.getElementById('form-' + idx).submit();
+        };
+
+    })();
+    </script>
+</body>
+</html>
