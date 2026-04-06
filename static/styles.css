@@ -199,33 +199,7 @@ header a.active {
     margin: 8px;
 }
 
-/* --- Widget Inner Component Styles (proportional via cqmin) --- */
-
-/* Calendar Widget */
-.widget-calendar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    gap: 2cqmin;
-}
-
-.widget-calendar .cal-month {
-    font-size: 12cqmin;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.widget-calendar .cal-day {
-    font-size: 52cqmin;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.04em;
-}
+/* --- Shared Typography Faces --- */
 
 /* Rounded font face — macOS SF Pro Rounded */
 @font-face {
@@ -289,171 +263,6 @@ header a.active {
     font-family: 'SFCompactRounded';
     src: local('.SFCompactRounded-Heavy'), local('SFCompactRounded-Heavy');
     font-weight: 800;
-}
-
-/* Clock Widget — rebuilt from scratch */
-.widget-clock {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    /* Force 1:1 square */
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    max-height: 100%;
-    margin: auto;
-    font-family: 'SFCompactRounded', 'SFCompact', 'SFRounded', 'DIN Condensed', ui-rounded, system-ui, sans-serif;
-}
-
-/* Radial tick ring — thin spokes masked to a squircle donut */
-.widget-clock .clock-ticks {
-    position: absolute;
-    inset: 3cqmin;
-    border-radius: 22%;
-    pointer-events: none;
-    /* Tick length = padding thickness */
-    padding: 2.5cqmin;
-    /* 60 radial spokes: 1.2deg tick, 4.8deg gap = 6deg step = 60 ticks */
-    background: repeating-conic-gradient(
-        from 0deg,
-        rgba(255,255,255,0.15) 0deg 1.2deg,
-        transparent 1.2deg 6deg
-    );
-    /* Squircle donut: subtract content-box from padding-box */
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    mask-composite: exclude;
-}
-
-.widget-clock .clock-city {
-    font-size: 10cqmin;
-    font-weight: 600;
-    color: inherit;
-    opacity: 0.55;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    z-index: 1;
-}
-
-.widget-clock .clock-time {
-    display: flex;
-    align-items: center;
-    font-size: 34cqmin;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height: 1;
-    z-index: 1;
-    /* Widen the condensed font slightly */
-    transform: scaleX(1.06);
-}
-
-/* Colon as perfect circles */
-.widget-clock .clock-colon {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5cqmin;
-    margin: 0 0.5cqmin;
-    padding-bottom: 1.5cqmin;
-}
-
-.widget-clock .clock-colon-dot {
-    width: 3.2cqmin;
-    height: 3.2cqmin;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-.widget-clock .clock-offset {
-    font-size: 9cqmin;
-    font-weight: 600;
-    color: inherit;
-    opacity: 0.45;
-    z-index: 1;
-}
-
-/* Sunrise/Sunset Widget */
-.widget-sunrise {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    padding: 6cqmin;
-    box-sizing: border-box;
-    font-family: 'SFRounded', 'SF Pro Rounded', ui-rounded, system-ui, sans-serif;
-    gap: 0;
-}
-
-.widget-sunrise .sunrise-header {
-    display: flex;
-    align-items: center;
-    gap: 2cqmin;
-    margin-bottom: 1cqmin;
-}
-
-.widget-sunrise .sunrise-icon svg {
-    width: 9cqmin;
-    height: 9cqmin;
-    display: block;
-}
-
-.widget-sunrise .sunrise-label {
-    font-size: 8cqmin;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: rgba(255, 255, 255, 0.55);
-}
-
-.widget-sunrise .sunrise-time {
-    font-size: 28cqmin;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-}
-
-.widget-sunrise .sunrise-time small {
-    font-size: 48%;
-    font-weight: 600;
-    vertical-align: baseline;
-    letter-spacing: 0;
-}
-
-.widget-sunrise .sunrise-curve {
-    width: 72%;
-    margin: 3cqmin 0 2cqmin;
-    overflow: visible;
-}
-
-.widget-sunrise .sunrise-curve .arc {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.35);
-    stroke-width: 2;
-}
-
-.widget-sunrise .sunrise-curve .horizon {
-    stroke: rgba(255, 255, 255, 0.2);
-    stroke-width: 1.5;
-}
-
-.widget-sunrise .sunrise-curve .sun-dot {
-    fill: #fff;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,0.4));
-}
-
-.widget-sunrise .sunrise-sunset {
-    font-size: 8cqmin;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
 }
 
 /* --- Settings Page --- */
@@ -1143,3 +952,79 @@ header a.active {
     white-space: nowrap;
     border: 0;
 }
+
+/* GridStack 18-column layout generated manually */
+.gs-18>.grid-stack-item[gs-x="1"] { left: 5.556%; }
+.gs-18>.grid-stack-item[gs-w="1"] { width: 5.556%; }
+.gs-18>.grid-stack-item[gs-x="2"] { left: 11.111%; }
+.gs-18>.grid-stack-item[gs-w="2"] { width: 11.111%; }
+.gs-18>.grid-stack-item[gs-x="3"] { left: 16.667%; }
+.gs-18>.grid-stack-item[gs-w="3"] { width: 16.667%; }
+.gs-18>.grid-stack-item[gs-x="4"] { left: 22.222%; }
+.gs-18>.grid-stack-item[gs-w="4"] { width: 22.222%; }
+.gs-18>.grid-stack-item[gs-x="5"] { left: 27.778%; }
+.gs-18>.grid-stack-item[gs-w="5"] { width: 27.778%; }
+.gs-18>.grid-stack-item[gs-x="6"] { left: 33.333%; }
+.gs-18>.grid-stack-item[gs-w="6"] { width: 33.333%; }
+.gs-18>.grid-stack-item[gs-x="7"] { left: 38.889%; }
+.gs-18>.grid-stack-item[gs-w="7"] { width: 38.889%; }
+.gs-18>.grid-stack-item[gs-x="8"] { left: 44.444%; }
+.gs-18>.grid-stack-item[gs-w="8"] { width: 44.444%; }
+.gs-18>.grid-stack-item[gs-x="9"] { left: 50.0%; }
+.gs-18>.grid-stack-item[gs-w="9"] { width: 50.0%; }
+.gs-18>.grid-stack-item[gs-x="10"] { left: 55.556%; }
+.gs-18>.grid-stack-item[gs-w="10"] { width: 55.556%; }
+.gs-18>.grid-stack-item[gs-x="11"] { left: 61.111%; }
+.gs-18>.grid-stack-item[gs-w="11"] { width: 61.111%; }
+.gs-18>.grid-stack-item[gs-x="12"] { left: 66.667%; }
+.gs-18>.grid-stack-item[gs-w="12"] { width: 66.667%; }
+.gs-18>.grid-stack-item[gs-x="13"] { left: 72.222%; }
+.gs-18>.grid-stack-item[gs-w="13"] { width: 72.222%; }
+.gs-18>.grid-stack-item[gs-x="14"] { left: 77.778%; }
+.gs-18>.grid-stack-item[gs-w="14"] { width: 77.778%; }
+.gs-18>.grid-stack-item[gs-x="15"] { left: 83.333%; }
+.gs-18>.grid-stack-item[gs-w="15"] { width: 83.333%; }
+.gs-18>.grid-stack-item[gs-x="16"] { left: 88.889%; }
+.gs-18>.grid-stack-item[gs-w="16"] { width: 88.889%; }
+.gs-18>.grid-stack-item[gs-x="17"] { left: 94.444%; }
+.gs-18>.grid-stack-item[gs-w="17"] { width: 94.444%; }
+.gs-18>.grid-stack-item[gs-x="18"] { left: 100.0%; }
+.gs-18>.grid-stack-item[gs-w="18"] { width: 100.0%; }
+.gs-18 > .grid-stack-item[gs-w="1"] { width: 5.556%; }
+.gs-18 > .grid-stack-item[gs-x="1"] { left: 5.556%; }
+.gs-18 > .grid-stack-item[gs-w="2"] { width: 11.111%; }
+.gs-18 > .grid-stack-item[gs-x="2"] { left: 11.111%; }
+.gs-18 > .grid-stack-item[gs-w="3"] { width: 16.667%; }
+.gs-18 > .grid-stack-item[gs-x="3"] { left: 16.667%; }
+.gs-18 > .grid-stack-item[gs-w="4"] { width: 22.222%; }
+.gs-18 > .grid-stack-item[gs-x="4"] { left: 22.222%; }
+.gs-18 > .grid-stack-item[gs-w="5"] { width: 27.778%; }
+.gs-18 > .grid-stack-item[gs-x="5"] { left: 27.778%; }
+.gs-18 > .grid-stack-item[gs-w="6"] { width: 33.333%; }
+.gs-18 > .grid-stack-item[gs-x="6"] { left: 33.333%; }
+.gs-18 > .grid-stack-item[gs-w="7"] { width: 38.889%; }
+.gs-18 > .grid-stack-item[gs-x="7"] { left: 38.889%; }
+.gs-18 > .grid-stack-item[gs-w="8"] { width: 44.444%; }
+.gs-18 > .grid-stack-item[gs-x="8"] { left: 44.444%; }
+.gs-18 > .grid-stack-item[gs-w="9"] { width: 50.0%; }
+.gs-18 > .grid-stack-item[gs-x="9"] { left: 50.0%; }
+.gs-18 > .grid-stack-item[gs-w="10"] { width: 55.556%; }
+.gs-18 > .grid-stack-item[gs-x="10"] { left: 55.556%; }
+.gs-18 > .grid-stack-item[gs-w="11"] { width: 61.111%; }
+.gs-18 > .grid-stack-item[gs-x="11"] { left: 61.111%; }
+.gs-18 > .grid-stack-item[gs-w="12"] { width: 66.667%; }
+.gs-18 > .grid-stack-item[gs-x="12"] { left: 66.667%; }
+.gs-18 > .grid-stack-item[gs-w="13"] { width: 72.222%; }
+.gs-18 > .grid-stack-item[gs-x="13"] { left: 72.222%; }
+.gs-18 > .grid-stack-item[gs-w="14"] { width: 77.778%; }
+.gs-18 > .grid-stack-item[gs-x="14"] { left: 77.778%; }
+.gs-18 > .grid-stack-item[gs-w="15"] { width: 83.333%; }
+.gs-18 > .grid-stack-item[gs-x="15"] { left: 83.333%; }
+.gs-18 > .grid-stack-item[gs-w="16"] { width: 88.889%; }
+.gs-18 > .grid-stack-item[gs-x="16"] { left: 88.889%; }
+.gs-18 > .grid-stack-item[gs-w="17"] { width: 94.444%; }
+.gs-18 > .grid-stack-item[gs-x="17"] { left: 94.444%; }
+.gs-18 > .grid-stack-item[gs-w="18"] { width: 100.0%; }
+.gs-18 > .grid-stack-item[gs-x="18"] { left: 100.0%; }
+.gs-18 > .grid-stack-item[gs-x="0"] { left: 0%; }
+.gs-18 > .grid-stack-item { width: 5.556%; }
