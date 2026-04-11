@@ -1,5 +1,5 @@
 module.exports = {
-    "id": "widget-apple-calendar",
+    "id": "widget-apple-calendar-2",
     "x": 6,
     "y": 0,
     "w": 3,
