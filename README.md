@@ -4,7 +4,6 @@ A minimal, customizable widget dashboard inspired by Apple, Dieter Rams design p
 
 ![Dashboard](screenshots/wallpapers.png)
 
-![Widgets](screenshots/widgets.png)
 
 ## Quick Start
 
