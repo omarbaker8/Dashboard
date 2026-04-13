@@ -1,5 +1,8 @@
 import os
 import json
+import re
+import time
+import urllib.request
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort
 from PIL import Image
 from io import BytesIO
@@ -194,6 +197,73 @@ def update_layout():
         save_widget(w)
 
     return jsonify({"status": "success"})
+
+
+# ---------------------------------------------------------------------------
+# API: BBC News — fetches top stories from BBC RSS, cached for 5 minutes
+# ---------------------------------------------------------------------------
+
+BBC_LIVE_URL = 'https://www.bbc.com/live/news'
+_bbc_cache = {'ts': 0, 'items': []}
+_BBC_TTL = 300  # 5 minutes
+_BBC_NEXT_DATA_RE = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.+?)</script>', re.DOTALL)
+
+
+def fetch_bbc_news():
+    now = time.time()
+    if _bbc_cache['items'] and (now - _bbc_cache['ts']) < _BBC_TTL:
+        return _bbc_cache['items']
+
+    try:
+        req = urllib.request.Request(BBC_LIVE_URL, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            html = resp.read().decode('utf-8', errors='replace')
+
+        m = _BBC_NEXT_DATA_RE.search(html)
+        if not m:
+            raise ValueError('__NEXT_DATA__ not found')
+        data = json.loads(m.group(1))
+
+        # Navigate to the live news section content
+        page = data.get('props', {}).get('pageProps', {}).get('page', {})
+        # The key is a dynamic tuple-style string; pick the first dict value
+        page_obj = next((v for v in page.values() if isinstance(v, dict)), {}) if isinstance(page, dict) else {}
+        sections = page_obj.get('sections', [])
+        content = sections[0].get('content', []) if sections else []
+
+        items = []
+        for c in content:
+            title = (c.get('title') or '').strip()
+            if not title:
+                continue
+            img_src = ''
+            try:
+                img_src = c['image']['model']['blocks'].get('src', '') or ''
+            except (KeyError, TypeError):
+                pass
+            items.append({
+                'title': title,
+                'link': c.get('href', ''),
+                'isLive': bool(c.get('isLiveNow')),
+                'lastUpdated': (c.get('metadata') or {}).get('lastUpdated'),
+                'description': c.get('description', ''),
+                'image': img_src,
+            })
+            if len(items) >= 10:
+                break
+
+        if items:
+            _bbc_cache['items'] = items
+            _bbc_cache['ts'] = now
+        return items
+    except Exception as e:
+        print(f"[bbc] fetch failed: {e}")
+        return _bbc_cache['items']
+
+
+@app.route('/api/bbc_news')
+def api_bbc_news():
+    return jsonify(fetch_bbc_news())
 
 
 if __name__ == '__main__':
