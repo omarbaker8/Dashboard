@@ -3,14 +3,16 @@ import json
 import re
 import time
 import urllib.request
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, make_response
 from PIL import Image
 from io import BytesIO
+from db import (get_device, create_device, list_devices, get_device_config,
+                save_device_config, get_device_widgets, save_device_widget,
+                init_device_widgets)
 
 app = Flask(__name__)
 
 WIDGETS_DIR = 'widgets'
-CONFIG_FILE = os.path.join(WIDGETS_DIR, 'config.json')
 WALLPAPERS_DIR = os.path.join('static', 'wallpapers')
 THUMBS_DIR = os.path.join(WALLPAPERS_DIR, '.thumbs')
 THUMB_SIZE = (280, 175)
@@ -20,10 +22,11 @@ os.makedirs(WIDGETS_DIR, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Widget I/O — fully dynamic, just add a folder with data.js
+# Widget I/O — base widget definitions from disk (templates)
 # ---------------------------------------------------------------------------
 
-def get_widgets():
+def get_base_widgets():
+    """Read widget definitions from disk. These are the base templates."""
     widgets = []
     for item in sorted(os.listdir(WIDGETS_DIR)):
         item_path = os.path.join(WIDGETS_DIR, item)
@@ -45,7 +48,8 @@ def get_widgets():
     return sorted(widgets, key=lambda x: x.get('id', ''))
 
 
-def save_widget(widget):
+def save_base_widget(widget):
+    """Save widget definition to disk (base template)."""
     widget_dir = os.path.join(WIDGETS_DIR, widget['id'])
     os.makedirs(widget_dir, exist_ok=True)
     filepath = os.path.join(widget_dir, 'data.js')
@@ -54,22 +58,25 @@ def save_widget(widget):
 
 
 # ---------------------------------------------------------------------------
-# Config I/O — background and global settings
+# Device-aware helpers
 # ---------------------------------------------------------------------------
 
-def get_config():
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            pass
-    return {"background": "#0a0a0a", "bg_blur": 0, "bg_dim": 0}
+def current_device_id():
+    """Get device_id from cookie, or None if not set."""
+    return request.cookies.get('device_id')
 
 
-def save_config(config):
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=4)
+def require_device():
+    """Return device dict or None. If None, caller should redirect to setup."""
+    did = current_device_id()
+    if not did:
+        return None
+    return get_device(did)
+
+
+def get_widgets_for_device(device_id):
+    """Get widgets with per-device overrides applied."""
+    return get_device_widgets(device_id, get_base_widgets())
 
 
 # ---------------------------------------------------------------------------
@@ -78,17 +85,66 @@ def save_config(config):
 
 @app.route('/')
 def index():
+    if not require_device():
+        return redirect(url_for('setup'))
     return redirect(url_for('dashboard'))
+
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    if request.method == 'POST':
+        device_type = request.form.get('device_type', 'laptop')
+        if device_type not in ('laptop', 'tablet'):
+            device_type = 'laptop'
+
+        device_id, name = create_device(device_type)
+        # Initialize per-device widgets from base templates
+        init_device_widgets(device_id, device_type, get_base_widgets())
+        # Set default config
+        save_device_config(device_id, {
+            "background": "url('/static/wallpapers/Acrylic 4.png') no-repeat center / cover fixed",
+            "bg_blur": 0,
+            "bg_dim": 0,
+        })
+
+        resp = make_response(redirect(url_for('dashboard')))
+        resp.set_cookie('device_id', device_id, max_age=60*60*24*365*5, httponly=True, samesite='Lax')
+        return resp
+
+    # Check if there are existing devices to offer switching
+    devices = list_devices()
+    return render_template('setup.html', devices=devices)
+
+
+@app.route('/switch/<device_id>')
+def switch_device(device_id):
+    """Switch to an existing device."""
+    device = get_device(device_id)
+    if not device:
+        return redirect(url_for('setup'))
+    resp = make_response(redirect(url_for('dashboard')))
+    resp.set_cookie('device_id', device_id, max_age=60*60*24*365*5, httponly=True, samesite='Lax')
+    return resp
 
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', widgets=get_widgets(), config=get_config())
+    device = require_device()
+    if not device:
+        return redirect(url_for('setup'))
+    config = get_device_config(device['id'])
+    widgets = get_widgets_for_device(device['id'])
+    return render_template('dashboard.html', widgets=widgets, config=config, device=device)
 
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    config = get_config()
+    device = require_device()
+    if not device:
+        return redirect(url_for('setup'))
+
+    config = get_device_config(device['id'])
+
     if request.method == 'POST':
         action = request.form.get('action')
 
@@ -96,7 +152,8 @@ def settings():
             widget_id = request.form.get('id', '').strip()
             new_css = request.form.get('css', '').strip()
             if widget_id and new_css:
-                for w in get_widgets():
+                widgets = get_widgets_for_device(device['id'])
+                for w in widgets:
                     if w['id'] == widget_id:
                         w['css'] = new_css
                         # Update location fields if provided
@@ -111,23 +168,23 @@ def settings():
                             val = request.form.get(key)
                             if val is not None:
                                 w[key] = val.strip()
-                        save_widget(w)
+                        save_device_widget(device['id'], w)
                         break
 
         elif action == 'update_background':
             bg_css = request.form.get('background_css', '').strip()
             if bg_css:
                 config['background'] = bg_css
-            # Always persist blur/dim (even 0, so users can reset)
             bg_blur = request.form.get('bg_blur', '0')
             bg_dim = request.form.get('bg_dim', '0')
             config['bg_blur'] = int(bg_blur) if bg_blur.isdigit() else 0
             config['bg_dim'] = int(bg_dim) if bg_dim.isdigit() else 0
-            save_config(config)
+            save_device_config(device['id'], config)
 
         return redirect(url_for('settings'))
 
-    return render_template('settings.html', widgets=get_widgets(), config=config)
+    widgets = get_widgets_for_device(device['id'])
+    return render_template('settings.html', widgets=widgets, config=config, device=device)
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +209,6 @@ def api_wallpapers():
 
 @app.route('/api/thumb/<path:filename>')
 def api_thumb(filename):
-    # Security: prevent directory traversal
     safe_name = os.path.basename(filename)
     if safe_name != filename or '..' in filename:
         abort(400)
@@ -165,11 +221,9 @@ def api_thumb(filename):
     thumb_name = os.path.splitext(safe_name)[0] + '.jpg'
     thumb_path = os.path.join(THUMBS_DIR, thumb_name)
 
-    # Serve cached thumbnail if newer than source
     if os.path.isfile(thumb_path) and os.path.getmtime(thumb_path) >= os.path.getmtime(src):
         return send_file(thumb_path, mimetype='image/jpeg')
 
-    # Generate thumbnail
     try:
         img = Image.open(src)
         img.thumbnail(THUMB_SIZE, Image.LANCZOS)
@@ -186,16 +240,21 @@ def api_thumb(filename):
 
 
 # ---------------------------------------------------------------------------
-# API: Layout persistence
+# API: Layout persistence (now per-device)
 # ---------------------------------------------------------------------------
 
 @app.route('/api/update_layout', methods=['POST'])
 def update_layout():
+    device = require_device()
+    if not device:
+        return jsonify({"status": "error", "message": "no device"})
+
     changes = request.json
     if not changes:
         return jsonify({"status": "error", "message": "no data"})
 
-    widget_map = {w['id']: w for w in get_widgets()}
+    widgets = get_widgets_for_device(device['id'])
+    widget_map = {w['id']: w for w in widgets}
 
     for item in changes:
         wid = item.get('id')
@@ -206,18 +265,18 @@ def update_layout():
             val = item.get(key)
             if val is not None:
                 w[key] = val
-        save_widget(w)
+        save_device_widget(device['id'], w)
 
     return jsonify({"status": "success"})
 
 
 # ---------------------------------------------------------------------------
-# API: BBC News — fetches top stories from BBC RSS, cached for 5 minutes
+# API: BBC News
 # ---------------------------------------------------------------------------
 
 BBC_LIVE_URL = 'https://www.bbc.com/live/news'
 _bbc_cache = {'ts': 0, 'items': []}
-_BBC_TTL = 300  # 5 minutes
+_BBC_TTL = 300
 _BBC_NEXT_DATA_RE = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.+?)</script>', re.DOTALL)
 
 
@@ -236,9 +295,7 @@ def fetch_bbc_news():
             raise ValueError('__NEXT_DATA__ not found')
         data = json.loads(m.group(1))
 
-        # Navigate to the live news section content
         page = data.get('props', {}).get('pageProps', {}).get('page', {})
-        # The key is a dynamic tuple-style string; pick the first dict value
         page_obj = next((v for v in page.values() if isinstance(v, dict)), {}) if isinstance(page, dict) else {}
         sections = page_obj.get('sections', [])
         content = sections[0].get('content', []) if sections else []

@@ -18,6 +18,7 @@
     <header>
         <a href="/dashboard" class="active">Dashboard</a>
         <a href="/settings">Settings</a>
+        {% if device %}<a href="/setup" style="margin-left:auto;opacity:0.4;font-size:12px;">{{ device.name }}</a>{% endif %}
     </header>
 
     <div class="grid-stack" id="dashboard-grid">
