@@ -32,7 +32,11 @@
              gs-min-h="1"
              {% if widget.lock_ratio %}data-lock-ratio="1"{% endif %}>
             <div class="grid-stack-item-content">
-                <div class="widget-item" style="{{ widget.css }}">
+                <div class="widget-item" style="{{ widget.css }}"
+                     {% if widget.lat is defined %}data-lat="{{ widget.lat }}"{% endif %}
+                     {% if widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}
+                     {% if widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
+                     {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>

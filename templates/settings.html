@@ -292,11 +292,52 @@
                         </div>
                     </div>
 
+                    <!-- Location (only for location-aware widgets) -->
+                    {% if widget.get('lat') is not none or widget.get('timezone') is not none %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Location</label>
+                        <div class="control-grid">
+                            {% if widget.get('lat') is not none %}
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Latitude</label>
+                                <input type="text" class="settings-input" id="lat-{{ loop.index0 }}" value="{{ widget.lat }}" style="font-size:13px;">
+                            </div>
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Longitude</label>
+                                <input type="text" class="settings-input" id="lng-{{ loop.index0 }}" value="{{ widget.lng }}" style="font-size:13px;">
+                            </div>
+                            {% endif %}
+                            {% if widget.get('timezone') is not none %}
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Timezone</label>
+                                <input type="text" class="settings-input" id="tz-{{ loop.index0 }}" value="{{ widget.timezone }}" style="font-size:13px;" placeholder="Europe/London">
+                            </div>
+                            {% endif %}
+                            {% if widget.get('city') is not none %}
+                            <div class="control-item">
+                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">City label</label>
+                                <input type="text" class="settings-input" id="city-{{ loop.index0 }}" value="{{ widget.city }}" style="font-size:13px;" placeholder="DUB">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Save -->
                     <form method="POST" action="/settings" id="form-{{ loop.index0 }}">
                         <input type="hidden" name="action" value="update_widget">
                         <input type="hidden" name="id" value="{{ widget.id }}">
                         <input type="hidden" name="css" id="css-output-{{ loop.index0 }}" value="{{ widget.css }}">
+                        {% if widget.get('lat') is not none %}
+                        <input type="hidden" name="lat" id="lat-out-{{ loop.index0 }}" value="{{ widget.lat }}">
+                        <input type="hidden" name="lng" id="lng-out-{{ loop.index0 }}" value="{{ widget.lng }}">
+                        {% endif %}
+                        {% if widget.get('timezone') is not none %}
+                        <input type="hidden" name="timezone" id="tz-out-{{ loop.index0 }}" value="{{ widget.timezone }}">
+                        {% endif %}
+                        {% if widget.get('city') is not none %}
+                        <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.city }}">
+                        {% endif %}
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -684,6 +725,12 @@
         window.saveWidget = function(idx) {
             var css = buildCSS(idx);
             document.getElementById('css-output-' + idx).value = css;
+            // Copy location fields into hidden form inputs
+            ['lat','lng','tz','city'].forEach(function(f) {
+                var inp = document.getElementById(f + '-' + idx);
+                var out = document.getElementById(f + '-out-' + idx);
+                if (inp && out) out.value = inp.value;
+            });
             document.getElementById('form-' + idx).submit();
         };
 

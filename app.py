@@ -99,6 +99,18 @@ def settings():
                 for w in get_widgets():
                     if w['id'] == widget_id:
                         w['css'] = new_css
+                        # Update location fields if provided
+                        for key in ('lat', 'lng'):
+                            val = request.form.get(key)
+                            if val is not None:
+                                try:
+                                    w[key] = float(val)
+                                except ValueError:
+                                    pass
+                        for key in ('timezone', 'city'):
+                            val = request.form.get(key)
+                            if val is not None:
+                                w[key] = val.strip()
                         save_widget(w)
                         break
 
