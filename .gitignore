@@ -11,3 +11,6 @@ build/
 .env
 .venv/
 venv/
+*.db
+*.db-shm
+*.db-wal

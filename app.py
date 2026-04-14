@@ -8,7 +8,7 @@ from PIL import Image
 from io import BytesIO
 from db import (get_device, create_device, list_devices, get_device_config,
                 save_device_config, get_device_widgets, save_device_widget,
-                init_device_widgets)
+                init_device_widgets, DEFAULT_CONFIG)
 
 app = Flask(__name__)
 
@@ -101,11 +101,7 @@ def setup():
         # Initialize per-device widgets from base templates
         init_device_widgets(device_id, device_type, get_base_widgets())
         # Set default config
-        save_device_config(device_id, {
-            "background": "url('/static/wallpapers/Acrylic 4.png') no-repeat center / cover fixed",
-            "bg_blur": 0,
-            "bg_dim": 0,
-        })
+        save_device_config(device_id, DEFAULT_CONFIG)
 
         resp = make_response(redirect(url_for('dashboard')))
         resp.set_cookie('device_id', device_id, max_age=60*60*24*365*5, httponly=True, samesite='Lax')
