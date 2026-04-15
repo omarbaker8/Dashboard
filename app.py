@@ -3,12 +3,21 @@ import json
 import re
 import time
 import urllib.request
+import urllib.parse
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, make_response
+
+# Load .env if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 from PIL import Image
 from io import BytesIO
 from db import (get_device, create_device, list_devices, get_device_config,
                 save_device_config, get_device_widgets, save_device_widget,
-                init_device_widgets, DEFAULT_CONFIG)
+                init_device_widgets, DEFAULT_CONFIG, get_preset_layout,
+                add_device_widget, remove_device_widget, get_device_widget_ids)
 
 app = Flask(__name__)
 
@@ -96,20 +105,39 @@ def setup():
         device_type = request.form.get('device_type', 'laptop')
         if device_type not in ('laptop', 'tablet'):
             device_type = 'laptop'
+        # Step 1: device type chosen → forward to widget picker
+        return redirect(url_for('setup_widgets', type=device_type))
 
+    devices = list_devices()
+    return render_template('setup.html', devices=devices)
+
+
+@app.route('/setup/widgets', methods=['GET', 'POST'])
+def setup_widgets():
+    device_type = request.args.get('type') or request.form.get('device_type', 'laptop')
+    if device_type not in ('laptop', 'tablet'):
+        device_type = 'laptop'
+
+    base_widgets = get_base_widgets()
+    base_by_id = {bw['id']: bw for bw in base_widgets}
+    preset_ids = [entry[0] for entry in get_preset_layout(device_type)
+                  if entry[0] in base_by_id]
+
+    if request.method == 'POST':
+        selected = set(request.form.getlist('widgets'))
         device_id, name = create_device(device_type)
-        # Initialize per-device widgets from base templates
-        init_device_widgets(device_id, device_type, get_base_widgets())
-        # Set default config
+        init_device_widgets(device_id, device_type, base_widgets, selected_ids=selected)
         save_device_config(device_id, DEFAULT_CONFIG)
 
         resp = make_response(redirect(url_for('dashboard')))
         resp.set_cookie('device_id', device_id, max_age=60*60*24*365*5, httponly=True, samesite='Lax')
         return resp
 
-    # Check if there are existing devices to offer switching
-    devices = list_devices()
-    return render_template('setup.html', devices=devices)
+    # All preset widgets pre-checked by default
+    return render_template('setup_widgets.html',
+                           device_type=device_type,
+                           widgets=[base_by_id[wid] for wid in preset_ids],
+                           preselected=set(preset_ids))
 
 
 @app.route('/switch/<device_id>')
@@ -143,6 +171,8 @@ def settings():
 
     if request.method == 'POST':
         action = request.form.get('action')
+        is_ajax = (request.headers.get('X-Requested-With') == 'fetch'
+                   or 'application/json' in (request.headers.get('Accept') or ''))
 
         if action == 'update_widget':
             widget_id = request.form.get('id', '').strip()
@@ -152,7 +182,6 @@ def settings():
                 for w in widgets:
                     if w['id'] == widget_id:
                         w['css'] = new_css
-                        # Update location fields if provided
                         for key in ('lat', 'lng'):
                             val = request.form.get(key)
                             if val is not None:
@@ -166,6 +195,8 @@ def settings():
                                 w[key] = val.strip()
                         save_device_widget(device['id'], w)
                         break
+            if is_ajax:
+                return jsonify({"status": "ok", "action": action, "id": widget_id})
 
         elif action == 'update_background':
             bg_css = request.form.get('background_css', '').strip()
@@ -176,11 +207,54 @@ def settings():
             config['bg_blur'] = int(bg_blur) if bg_blur.isdigit() else 0
             config['bg_dim'] = int(bg_dim) if bg_dim.isdigit() else 0
             save_device_config(device['id'], config)
+            if is_ajax:
+                return jsonify({"status": "ok", "action": action, "config": config})
+
+        elif action == 'remove_widget':
+            widget_id = request.form.get('id', '').strip()
+            if widget_id:
+                remove_device_widget(device['id'], widget_id)
+            if is_ajax:
+                return jsonify({"status": "ok", "action": action, "id": widget_id})
+
+        elif action == 'add_widget':
+            widget_id = request.form.get('id', '').strip()
+            if widget_id:
+                base_by_id = {bw['id']: bw for bw in get_base_widgets()}
+                if widget_id in base_by_id:
+                    add_device_widget(device['id'], device['type'], widget_id,
+                                      base_widget=base_by_id[widget_id])
+            if is_ajax:
+                return jsonify({"status": "ok", "action": action, "id": widget_id})
 
         return redirect(url_for('settings'))
 
     widgets = get_widgets_for_device(device['id'])
-    return render_template('settings.html', widgets=widgets, config=config, device=device)
+    # Build available widgets list (all base widgets + flag for currently active)
+    base_widgets = get_base_widgets()
+    active_ids = get_device_widget_ids(device['id'])
+    available_widgets = [{'id': bw['id'], 'active': bw['id'] in active_ids}
+                         for bw in base_widgets]
+    return render_template('settings.html', widgets=widgets, config=config,
+                           device=device, available_widgets=available_widgets)
+
+
+# ---------------------------------------------------------------------------
+# Fonts — widgets reference /fonts/SFNS.ttf etc.
+# ---------------------------------------------------------------------------
+
+FONTS_DIR = os.path.join('static', 'fonts')
+
+
+@app.route('/fonts/<path:filename>')
+def serve_font(filename):
+    safe_name = os.path.basename(filename)
+    if safe_name != filename or '..' in filename:
+        abort(400)
+    path = os.path.join(FONTS_DIR, safe_name)
+    if not os.path.isfile(path):
+        abort(404)
+    return send_file(path)
 
 
 # ---------------------------------------------------------------------------
@@ -329,6 +403,136 @@ def fetch_bbc_news():
 @app.route('/api/bbc_news')
 def api_bbc_news():
     return jsonify(fetch_bbc_news())
+
+
+# ---------------------------------------------------------------------------
+# API: Google Weather (wind) — keyed by lat/lng, cached 10 minutes per location
+# ---------------------------------------------------------------------------
+
+GOOGLE_WEATHER_URL = 'https://weather.googleapis.com/v1/currentConditions:lookup'
+_wind_cache = {}  # {(lat,lng): {'ts': ..., 'data': ...}}
+_WIND_TTL = 600  # 10 minutes
+
+
+@app.route('/api/google_wind')
+def api_google_wind():
+    key = os.getenv('GOOGLE_WEATHER_KEY')
+    if not key:
+        return jsonify({"error": "missing API key"}), 503
+
+    try:
+        lat = float(request.args.get('lat', '53.35'))
+        lng = float(request.args.get('lng', '-6.26'))
+    except ValueError:
+        return jsonify({"error": "invalid lat/lng"}), 400
+
+    cache_key = (round(lat, 3), round(lng, 3))
+    now = time.time()
+    cached = _wind_cache.get(cache_key)
+    if cached and (now - cached['ts']) < _WIND_TTL:
+        return jsonify(cached['data'])
+
+    try:
+        params = urllib.parse.urlencode({
+            'key': key,
+            'location.latitude': lat,
+            'location.longitude': lng,
+        })
+        req = urllib.request.Request(f'{GOOGLE_WEATHER_URL}?{params}')
+        with urllib.request.urlopen(req, timeout=8) as r:
+            full = json.loads(r.read())
+        wind = full.get('wind', {})
+        result = {
+            'speed': (wind.get('speed') or {}).get('value'),
+            'gust': (wind.get('gust') or {}).get('value'),
+            'direction': (wind.get('direction') or {}).get('degrees'),
+            'cardinal': (wind.get('direction') or {}).get('cardinal', ''),
+            'unit': (wind.get('speed') or {}).get('unit', 'KILOMETERS_PER_HOUR'),
+        }
+        _wind_cache[cache_key] = {'ts': now, 'data': result}
+        return jsonify(result)
+    except Exception as e:
+        print(f"[google_wind] fetch failed: {e}")
+        if cached:
+            return jsonify(cached['data'])
+        return jsonify({"error": str(e)}), 502
+
+
+# ---------------------------------------------------------------------------
+# API: Google Weather (alerts) — keyed by lat/lng, cached 5 minutes per location
+# ---------------------------------------------------------------------------
+
+GOOGLE_ALERTS_URL = 'https://weather.googleapis.com/v1/publicAlerts:lookup'
+_alerts_cache = {}  # {(lat,lng,lang): {'ts': ..., 'data': ...}}
+_ALERTS_TTL = 300  # 5 minutes
+
+
+@app.route('/api/google_weather_alerts')
+def api_google_weather_alerts():
+    key = os.getenv('GOOGLE_WEATHER_KEY')
+    if not key:
+        return jsonify({"error": "missing API key"}), 503
+
+    try:
+        lat = float(request.args.get('lat', '53.35'))
+        lng = float(request.args.get('lng', '-6.26'))
+    except ValueError:
+        return jsonify({"error": "invalid lat/lng"}), 400
+    lang = request.args.get('lang', 'en')
+
+    cache_key = (round(lat, 3), round(lng, 3), lang)
+    now = time.time()
+    cached = _alerts_cache.get(cache_key)
+    if cached and (now - cached['ts']) < _ALERTS_TTL:
+        return jsonify(cached['data'])
+
+    try:
+        params = urllib.parse.urlencode({
+            'key': key,
+            'location.latitude': lat,
+            'location.longitude': lng,
+            'languageCode': lang,
+        })
+        req = urllib.request.Request(f'{GOOGLE_ALERTS_URL}?{params}')
+        with urllib.request.urlopen(req, timeout=8) as r:
+            full = json.loads(r.read())
+
+        alerts_in = full.get('weatherAlerts', []) or []
+        alerts = []
+        for a in alerts_in:
+            title = a.get('alertTitle')
+            if isinstance(title, dict):
+                title = title.get('text', '')
+            instr = a.get('instruction')
+            if isinstance(instr, list):
+                instr = ' '.join(instr)
+            ds = a.get('dataSource', {}) or {}
+            alerts.append({
+                'id': a.get('alertId', ''),
+                'title': title or '',
+                'eventType': a.get('eventType', ''),
+                'areaName': a.get('areaName', ''),
+                'severity': a.get('severity', 'UNKNOWN'),
+                'urgency': a.get('urgency', 'UNKNOWN'),
+                'certainty': a.get('certainty', 'UNKNOWN'),
+                'description': a.get('description', ''),
+                'instruction': instr or '',
+                'startTime': a.get('startTime', ''),
+                'expirationTime': a.get('expirationTime', ''),
+                'source': ds.get('name', ''),
+                'sourceUrl': ds.get('authorityUri', ''),
+            })
+        result = {
+            'alerts': alerts,
+            'regionCode': full.get('regionCode', ''),
+        }
+        _alerts_cache[cache_key] = {'ts': now, 'data': result}
+        return jsonify(result)
+    except Exception as e:
+        print(f"[google_alerts] fetch failed: {e}")
+        if cached:
+            return jsonify(cached['data'])
+        return jsonify({"error": str(e)}), 502
 
 
 if __name__ == '__main__':

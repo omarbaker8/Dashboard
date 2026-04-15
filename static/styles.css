@@ -295,6 +295,18 @@ header a.active {
     overflow: hidden;
 }
 
+/* Allow dropdowns inside cards to escape the clipping boundary */
+.settings-card:has(.preset-dropdown) {
+    overflow: visible;
+    position: relative;
+}
+
+/* Hoist the whole card above later siblings when its dropdown is open
+   (sibling cards create their own stacking contexts via backdrop-filter) */
+.settings-card:has(.preset-dropdown.open) {
+    z-index: 1000;
+}
+
 .settings-row {
     padding: 14px 18px;
     display: flex;
@@ -510,7 +522,7 @@ header a.active {
     top: 100%;
     left: 0;
     right: 0;
-    z-index: 50;
+    z-index: 1000;
     background: rgba(28, 28, 30, 0.95);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);

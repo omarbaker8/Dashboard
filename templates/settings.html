@@ -59,11 +59,10 @@
                         <svg class="collapse-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </div>
                     <div class="collapse-body">
-                        <form method="POST" action="/settings" style="margin-top:10px;">
-                            <input type="hidden" name="action" value="update_background">
-                            <textarea class="settings-input" name="background_css" rows="2" placeholder="#0a0a0a or linear-gradient(...)">{{ config.background }}</textarea>
-                            <div style="padding-top:8px;"><button type="submit" class="btn btn-subtle">Apply</button></div>
-                        </form>
+                        <div style="margin-top:10px;">
+                            <textarea class="settings-input" id="custom-bg-css" rows="2" placeholder="#0a0a0a or linear-gradient(...)">{{ config.background }}</textarea>
+                            <div style="padding-top:8px;"><button type="button" class="btn btn-subtle" onclick="applyCustomBg()">Apply</button></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -130,6 +129,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- ============================================================ -->
+        <!-- WIDGETS — add / remove                                        -->
+        <!-- ============================================================ -->
+
+        {% if available_widgets %}
+        <div class="settings-section">
+            <div class="settings-section-title">Widgets</div>
+            <div class="settings-card">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    {% for w in available_widgets %}
+                    {% set parts = w.id.split('-') %}
+                    {% set prefix = parts[1] if parts|length > 1 else '' %}
+                    {% set name = parts[2:]|join(' ') if parts|length > 2 else w.id %}
+                    <div class="widget-toggle-row" data-wid="{{ w.id }}" data-active="{{ '1' if w.active else '0' }}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.02);">
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.9);">{{ name|title }}</span>
+                            <span style="font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.04em;">{{ prefix }}</span>
+                        </div>
+                        <button type="button" class="widget-toggle-btn btn {% if w.active %}btn-subtle{% else %}btn-primary{% endif %}" style="padding:6px 16px;font-size:12px;border-radius:8px;" onclick="toggleWidget(this)">
+                            {% if w.active %}Remove{% else %}Add{% endif %}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- ============================================================ -->
         <!-- WIDGET STYLING                                                -->
@@ -373,6 +400,27 @@
         <input type="hidden" name="background_css" id="preset-bg-value" value="">
     </form>
 
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+    <style>
+        .toast{
+            position:fixed;bottom:24px;left:50%;
+            transform:translate(-50%,20px);
+            padding:10px 18px;border-radius:10px;
+            background:rgba(30,30,30,0.92);
+            color:#fff;font-size:13px;font-weight:500;letter-spacing:-0.01em;
+            backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+            border:1px solid rgba(255,255,255,0.08);
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            opacity:0;pointer-events:none;
+            transition:opacity 0.2s ease, transform 0.2s ease;
+            z-index:9999;
+        }
+        .toast.show{opacity:1;transform:translate(-50%,0);}
+        .toast-ok{border-color:rgba(48,209,88,0.4);}
+        .toast-err{border-color:rgba(255,69,58,0.5);background:rgba(60,20,20,0.95);}
+    </style>
+
     <script>
     (function() {
         'use strict';
@@ -398,9 +446,25 @@
         document.getElementById('preset-menu').addEventListener('click', function(e) {
             var opt = e.target.closest('.preset-option');
             if (!opt) return;
-            document.getElementById('preset-bg-value').value = opt.getAttribute('data-value');
+            var val = opt.getAttribute('data-value');
+            document.getElementById('preset-bg-value').value = val;
             dropdown.classList.remove('open');
-            document.getElementById('preset-form').submit();
+            // AJAX apply
+            var data = new FormData();
+            data.set('action', 'update_background');
+            data.set('background_css', val);
+            fetch('/settings', {
+                method: 'POST', body: data,
+                headers: {'X-Requested-With': 'fetch', 'Accept': 'application/json'}
+            }).then(function(r) { return r.json(); })
+              .then(function(r) {
+                  if (r.status === 'ok') {
+                      document.body.style.background = val;
+                      var t = document.getElementById('toast');
+                      if (t) { t.textContent = 'Preset applied'; t.className = 'toast show toast-ok';
+                          setTimeout(function(){ t.className='toast'; },2000); }
+                  }
+              });
         });
 
         // ============================================================
@@ -517,7 +581,32 @@
                 inp2.type = 'hidden'; inp2.name = 'bg_dim'; inp2.value = dim; inp2.className = 'wp-extra';
                 form.appendChild(inp2);
             }
-            form.submit();
+            // AJAX submit
+            var data = new FormData(form);
+            fetch('/settings', {
+                method: 'POST', body: data,
+                headers: {'X-Requested-With': 'fetch', 'Accept': 'application/json'}
+            }).then(function(r) { return r.json(); })
+              .then(function(r) {
+                  if (r.status !== 'ok') { toast('Failed', 'err'); return; }
+                  // Apply live
+                  document.body.style.background = css;
+                  // Update blur/dim overlay if present or create one
+                  var overlay = document.querySelector('.bg-overlay');
+                  if (blur > 0 || dim > 0) {
+                      if (!overlay) {
+                          overlay = document.createElement('div');
+                          overlay.className = 'bg-overlay';
+                          document.body.insertBefore(overlay, document.body.firstChild);
+                      }
+                      overlay.style.cssText = (blur > 0 ? 'backdrop-filter:blur('+blur+'px);-webkit-backdrop-filter:blur('+blur+'px);' : '')
+                          + (dim > 0 ? 'background:rgba(0,0,0,'+(dim/100)+');' : '');
+                  } else if (overlay) {
+                      overlay.remove();
+                  }
+                  toast('Wallpaper applied', 'ok');
+              })
+              .catch(function() { toast('Failed', 'err'); });
         });
 
         document.getElementById('wallpaper-search').addEventListener('input', function() {
@@ -721,25 +810,100 @@
             });
         });
 
-        // Save widget
+        // ============================================================
+        // AJAX helpers — no page reloads
+        // ============================================================
+        function postForm(form, extraFields) {
+            var data = new FormData(form);
+            if (extraFields) {
+                Object.keys(extraFields).forEach(function(k) {
+                    data.set(k, extraFields[k]);
+                });
+            }
+            return fetch('/settings', {
+                method: 'POST',
+                body: data,
+                headers: {'X-Requested-With': 'fetch', 'Accept': 'application/json'}
+            }).then(function(r) { return r.json(); });
+        }
+        function postAction(action, extra) {
+            var data = new FormData();
+            data.set('action', action);
+            Object.keys(extra || {}).forEach(function(k) { data.set(k, extra[k]); });
+            return fetch('/settings', {
+                method: 'POST',
+                body: data,
+                headers: {'X-Requested-With': 'fetch', 'Accept': 'application/json'}
+            }).then(function(r) { return r.json(); });
+        }
+
+        // Toast
+        var _toastTimer = null;
+        function toast(msg, kind) {
+            var el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.className = 'toast show' + (kind ? ' toast-' + kind : '');
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(function() { el.className = 'toast'; }, 2000);
+        }
+
+        // Save widget (AJAX)
         window.saveWidget = function(idx) {
             var css = buildCSS(idx);
             document.getElementById('css-output-' + idx).value = css;
-            // Copy location fields into hidden form inputs
             ['lat','lng','tz','city'].forEach(function(f) {
                 var inp = document.getElementById(f + '-' + idx);
                 var out = document.getElementById(f + '-out-' + idx);
                 if (inp && out) out.value = inp.value;
             });
-            document.getElementById('form-' + idx).submit();
+            postForm(document.getElementById('form-' + idx))
+                .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
+                .catch(function() { toast('Save failed', 'err'); });
         };
 
-        // Apply raw CSS
+        // Apply raw CSS (AJAX)
         window.applyRawCSS = function(idx) {
             var raw = document.getElementById('raw-css-' + idx).value;
             document.getElementById('preview-' + idx).setAttribute('style', raw);
             document.getElementById('css-output-' + idx).value = raw;
-            document.getElementById('form-' + idx).submit();
+            postForm(document.getElementById('form-' + idx))
+                .then(function(r) { toast(r.status === 'ok' ? 'Applied' : 'Failed'); })
+                .catch(function() { toast('Apply failed', 'err'); });
+        };
+
+        // Toggle widget add/remove (AJAX)
+        window.toggleWidget = function(btn) {
+            var row = btn.closest('.widget-toggle-row');
+            var wid = row.dataset.wid;
+            var isActive = row.dataset.active === '1';
+            var action = isActive ? 'remove_widget' : 'add_widget';
+            btn.disabled = true;
+            postAction(action, {id: wid})
+                .then(function(r) {
+                    if (r.status !== 'ok') throw new Error();
+                    // Flip UI state
+                    row.dataset.active = isActive ? '0' : '1';
+                    btn.textContent = isActive ? 'Add' : 'Remove';
+                    btn.classList.toggle('btn-primary');
+                    btn.classList.toggle('btn-subtle');
+                    toast(isActive ? 'Widget removed' : 'Widget added', 'ok');
+                })
+                .catch(function() { toast('Failed', 'err'); })
+                .finally(function() { btn.disabled = false; });
+        };
+
+        // Apply custom background CSS (AJAX)
+        window.applyCustomBg = function() {
+            var css = document.getElementById('custom-bg-css').value;
+            postAction('update_background', {background_css: css})
+                .then(function(r) {
+                    if (r.status === 'ok') {
+                        document.body.style.background = css;
+                        toast('Background updated', 'ok');
+                    } else toast('Failed', 'err');
+                })
+                .catch(function() { toast('Failed', 'err'); });
         };
 
     })();
