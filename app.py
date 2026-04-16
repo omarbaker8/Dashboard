@@ -125,9 +125,26 @@ def setup_widgets():
 
     if request.method == 'POST':
         selected = set(request.form.getlist('widgets'))
+        # Default location from picker
+        d_lat = request.form.get('default_lat', '').strip()
+        d_lng = request.form.get('default_lng', '').strip()
+        d_city = request.form.get('default_city', '').strip()
+        d_tz = request.form.get('default_timezone', '').strip()
+        lat = float(d_lat) if d_lat else None
+        lng = float(d_lng) if d_lng else None
+
         device_id, name = create_device(device_type)
-        init_device_widgets(device_id, device_type, base_widgets, selected_ids=selected)
-        save_device_config(device_id, DEFAULT_CONFIG)
+        init_device_widgets(device_id, device_type, base_widgets,
+                            selected_ids=selected,
+                            default_lat=lat, default_lng=lng,
+                            default_city=d_city or None, default_timezone=d_tz or None)
+        cfg = dict(DEFAULT_CONFIG)
+        if lat is not None:
+            cfg['default_lat'] = lat
+            cfg['default_lng'] = lng
+            cfg['default_city'] = d_city
+            cfg['default_timezone'] = d_tz
+        save_device_config(device_id, cfg)
 
         resp = make_response(redirect(url_for('dashboard')))
         resp.set_cookie('device_id', device_id, max_age=60*60*24*365*5, httponly=True, samesite='Lax')
@@ -198,6 +215,23 @@ def settings():
             if is_ajax:
                 return jsonify({"status": "ok", "action": action, "id": widget_id})
 
+        elif action == 'update_default_location':
+            d_lat = request.form.get('default_lat', '').strip()
+            d_lng = request.form.get('default_lng', '').strip()
+            d_city = request.form.get('default_city', '').strip()
+            d_tz = request.form.get('default_timezone', '').strip()
+            if d_lat and d_lng:
+                try:
+                    config['default_lat'] = float(d_lat)
+                    config['default_lng'] = float(d_lng)
+                    config['default_city'] = d_city
+                    config['default_timezone'] = d_tz
+                    save_device_config(device['id'], config)
+                except ValueError:
+                    pass
+            if is_ajax:
+                return jsonify({"status": "ok", "action": action})
+
         elif action == 'update_background':
             bg_css = request.form.get('background_css', '').strip()
             if bg_css:
@@ -222,8 +256,16 @@ def settings():
             if widget_id:
                 base_by_id = {bw['id']: bw for bw in get_base_widgets()}
                 if widget_id in base_by_id:
+                    d_lat = config.get('default_lat')
+                    d_lng = config.get('default_lng')
+                    d_city = config.get('default_city', '')
+                    d_tz = config.get('default_timezone', '')
                     add_device_widget(device['id'], device['type'], widget_id,
-                                      base_widget=base_by_id[widget_id])
+                                      base_widget=base_by_id[widget_id],
+                                      default_lat=d_lat if isinstance(d_lat, (int, float)) else None,
+                                      default_lng=d_lng if isinstance(d_lng, (int, float)) else None,
+                                      default_city=d_city or None,
+                                      default_timezone=d_tz or None)
             if is_ajax:
                 return jsonify({"status": "ok", "action": action, "id": widget_id})
 
@@ -533,6 +575,81 @@ def api_google_weather_alerts():
         if cached:
             return jsonify(cached['data'])
         return jsonify({"error": str(e)}), 502
+
+
+# ---------------------------------------------------------------------------
+# API: Countries list (for location picker) — cached indefinitely
+# ---------------------------------------------------------------------------
+
+_countries_cache = None
+
+
+@app.route('/api/countries')
+def api_countries():
+    global _countries_cache
+    if _countries_cache:
+        return jsonify(_countries_cache)
+
+    try:
+        url = 'https://restcountries.com/v3.1/all?fields=name,latlng,capital,timezones'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = json.loads(r.read())
+
+        countries = []
+        for c in raw:
+            name = c.get('name', {}).get('common', '')
+            ll = c.get('latlng', [0, 0])
+            caps = c.get('capital', [])
+            tzs = c.get('timezones', [])
+            if not name or len(ll) < 2:
+                continue
+            countries.append({
+                'name': name,
+                'capital': caps[0] if caps else '',
+                'lat': round(ll[0], 4),
+                'lng': round(ll[1], 4),
+                'tz': tzs[0] if tzs else '',
+            })
+        countries.sort(key=lambda x: x['name'])
+        _countries_cache = countries
+        return jsonify(countries)
+    except Exception as e:
+        print(f"[countries] fetch failed: {e}")
+        return jsonify([]), 502
+
+
+# ---------------------------------------------------------------------------
+# API: Timezone lookup (lat/lng → IANA timezone) — cached per location
+# ---------------------------------------------------------------------------
+
+_tz_cache = {}  # {(lat,lng): 'Europe/Dublin'}
+
+
+@app.route('/api/timezone')
+def api_timezone():
+    try:
+        lat = round(float(request.args.get('lat', '0')), 1)
+        lng = round(float(request.args.get('lng', '0')), 1)
+    except ValueError:
+        return jsonify({"error": "invalid lat/lng"}), 400
+
+    cache_key = (lat, lng)
+    if cache_key in _tz_cache:
+        return jsonify({"timezone": _tz_cache[cache_key]})
+
+    try:
+        url = f'https://timeapi.io/api/timezone/coordinate?latitude={lat}&longitude={lng}'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read())
+        tz = data.get('timeZone', '')
+        if tz:
+            _tz_cache[cache_key] = tz
+        return jsonify({"timezone": tz})
+    except Exception as e:
+        print(f"[timezone] lookup failed: {e}")
+        return jsonify({"timezone": ""}), 502
 
 
 if __name__ == '__main__':

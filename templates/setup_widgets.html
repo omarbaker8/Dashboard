@@ -209,6 +209,97 @@
             color:rgba(255,255,255,0.6);
             margin-top:-12px;
         }
+
+        .location-section{
+            width:100%;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+
+        .location-label{
+            font-size:14px;
+            font-weight:600;
+            color:rgba(255,255,255,0.7);
+        }
+
+        .location-search-wrap{
+            position:relative;
+        }
+
+        .location-input{
+            width:100%;
+            padding:14px 16px;
+            border-radius:14px;
+            border:1.5px solid rgba(255,255,255,0.08);
+            background:rgba(128,128,128,0.1);
+            color:#fff;
+            font-size:14.5px;
+            font-weight:400;
+            font-family:inherit;
+            outline:none;
+            transition:border-color 0.2s, background 0.2s;
+            box-sizing:border-box;
+        }
+
+        .location-input::placeholder{color:rgba(255,255,255,0.3);}
+        .location-input:focus{border-color:rgba(255,255,255,0.2);background:rgba(128,128,128,0.15);}
+
+        .location-dropdown{
+            display:none;
+            position:absolute;
+            top:100%;
+            left:0;right:0;
+            margin-top:4px;
+            max-height:220px;
+            overflow-y:auto;
+            background:rgba(28,28,30,0.96);
+            backdrop-filter:blur(40px);
+            -webkit-backdrop-filter:blur(40px);
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:12px;
+            box-shadow:0 12px 40px rgba(0,0,0,0.5);
+            z-index:100;
+            scrollbar-width:thin;
+            scrollbar-color:rgba(255,255,255,0.1) transparent;
+        }
+
+        .location-dropdown.open{display:block;}
+
+        .location-opt{
+            padding:12px 16px;
+            cursor:pointer;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            transition:background 0.12s;
+        }
+
+        .location-opt:hover{background:rgba(255,255,255,0.06);}
+
+        .location-opt .loc-name{font-size:14px;font-weight:500;color:rgba(255,255,255,0.9);}
+        .location-opt .loc-cap{font-size:12px;color:rgba(255,255,255,0.4);}
+
+        .location-selected{
+            display:none;
+            align-items:center;
+            gap:10px;
+            padding:10px 14px;
+            border-radius:10px;
+            background:rgba(255,255,255,0.05);
+            border:1px solid rgba(255,255,255,0.08);
+            margin-top:4px;
+        }
+
+        .location-selected.show{display:flex;}
+        .location-selected .ls-text{flex:1;font-size:13px;color:rgba(255,255,255,0.7);}
+        .location-selected .ls-name{font-weight:600;color:rgba(255,255,255,0.9);}
+        .location-selected .ls-clear{
+            cursor:pointer;font-size:11px;color:rgba(255,255,255,0.4);
+            padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.06);
+            border:none;font-family:inherit;transition:all 0.15s;
+        }
+        .location-selected .ls-clear:hover{color:#fff;background:rgba(255,255,255,0.12);}
     </style>
 </head>
 <body>
@@ -247,6 +338,23 @@
                 {% endfor %}
             </div>
 
+            <!-- Location picker -->
+            <div class="location-section">
+                <div class="location-label">Default location</div>
+                <div class="location-search-wrap">
+                    <input type="text" class="location-input" id="loc-search" placeholder="Search country..." autocomplete="off">
+                    <div class="location-dropdown" id="loc-dropdown"></div>
+                </div>
+                <div class="location-selected" id="loc-selected">
+                    <div class="ls-text"><span class="ls-name" id="loc-sel-name"></span></div>
+                    <button type="button" class="ls-clear" onclick="clearLocation()">Clear</button>
+                </div>
+                <input type="hidden" name="default_lat" id="loc-lat" value="">
+                <input type="hidden" name="default_lng" id="loc-lng" value="">
+                <input type="hidden" name="default_city" id="loc-city" value="">
+                <input type="hidden" name="default_timezone" id="loc-tz" value="">
+            </div>
+
             <div class="actions">
                 <a class="btn" href="/setup">Back</a>
                 <button type="submit" class="btn btn-primary">Continue</button>
@@ -256,14 +364,10 @@
 
     <script>
         function toggleRow(label) {
-            // Let the click on the label naturally toggle the input via setTimeout
             setTimeout(function() {
                 var input = label.querySelector('input');
-                if (input.checked) {
-                    label.classList.add('checked');
-                } else {
-                    label.classList.remove('checked');
-                }
+                if (input.checked) label.classList.add('checked');
+                else label.classList.remove('checked');
             }, 0);
         }
         function toggleAll(state) {
@@ -273,6 +377,74 @@
                 if (state) row.classList.add('checked');
                 else row.classList.remove('checked');
             });
+        }
+
+        // Location picker
+        var countries = [];
+        var locSearch = document.getElementById('loc-search');
+        var locDrop = document.getElementById('loc-dropdown');
+        var locSel = document.getElementById('loc-selected');
+
+        fetch('/api/countries').then(function(r){return r.json();}).then(function(data){
+            countries = data;
+        });
+
+        locSearch.addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            if (q.length < 1) { locDrop.classList.remove('open'); return; }
+            var matches = countries.filter(function(c) {
+                return c.name.toLowerCase().indexOf(q) !== -1 ||
+                       (c.capital && c.capital.toLowerCase().indexOf(q) !== -1);
+            }).slice(0, 12);
+            if (!matches.length) { locDrop.classList.remove('open'); return; }
+            locDrop.innerHTML = matches.map(function(c) {
+                return "<div class='location-opt' data-lat='"+c.lat+"' data-lng='"+c.lng+"' data-name='"+c.name+"' data-cap='"+(c.capital||'')+"'>" +
+                    "<span class='loc-name'>"+c.name+"</span>" +
+                    "<span class='loc-cap'>"+(c.capital||'')+"</span></div>";
+            }).join('');
+            locDrop.classList.add('open');
+        });
+
+        locSearch.addEventListener('focus', function() {
+            if (this.value.length >= 1) this.dispatchEvent(new Event('input'));
+        });
+
+        locDrop.addEventListener('click', function(e) {
+            var opt = e.target.closest('.location-opt');
+            if (!opt) return;
+            selectLocation(opt.dataset.name, opt.dataset.cap, opt.dataset.lat, opt.dataset.lng);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.location-search-wrap')) locDrop.classList.remove('open');
+        });
+
+        function selectLocation(name, cap, lat, lng) {
+            document.getElementById('loc-lat').value = lat;
+            document.getElementById('loc-lng').value = lng;
+            document.getElementById('loc-city').value = cap || name;
+            var label = name + (cap ? ' \u2014 ' + cap : '');
+            document.getElementById('loc-sel-name').textContent = label + ' (resolving timezone\u2026)';
+            locSel.classList.add('show');
+            locSearch.value = '';
+            locDrop.classList.remove('open');
+            // Resolve IANA timezone from coordinates
+            fetch('/api/timezone?lat=' + lat + '&lng=' + lng)
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    document.getElementById('loc-tz').value = d.timezone || '';
+                    document.getElementById('loc-sel-name').textContent = label + (d.timezone ? ' \u00b7 ' + d.timezone : '');
+                })
+                .catch(function() {
+                    document.getElementById('loc-sel-name').textContent = label;
+                });
+        }
+
+        function clearLocation() {
+            document.getElementById('loc-lat').value = '';
+            document.getElementById('loc-lng').value = '';
+            document.getElementById('loc-city').value = '';
+            locSel.classList.remove('show');
         }
     </script>
 </body>

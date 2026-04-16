@@ -131,6 +131,32 @@
         </div>
 
         <!-- ============================================================ -->
+        <!-- DEFAULT LOCATION                                              -->
+        <!-- ============================================================ -->
+
+        <div class="settings-section">
+            <div class="settings-section-title">Default Location</div>
+            <div class="settings-card" style="overflow:visible;position:relative;z-index:500;">
+                <div class="settings-input-group">
+                    <label class="settings-input-label">Used by weather, sunrise, wind, and alerts widgets</label>
+                    <div style="position:relative;">
+                        <input type="text" class="settings-input" id="settings-loc-search" placeholder="Search country..." autocomplete="off" style="margin-bottom:0;">
+                        <div id="settings-loc-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;max-height:200px;overflow-y:auto;background:rgba(28,28,30,0.96);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.1);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:1000;scrollbar-width:thin;"></div>
+                    </div>
+                    {% if config.default_city is defined and config.default_city %}
+                    <div id="settings-loc-current" style="margin-top:8px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:13px;color:rgba(255,255,255,0.8);">{{ config.default_city }} <span style="opacity:0.4;">({{ config.default_lat }}, {{ config.default_lng }})</span></span>
+                    </div>
+                    {% else %}
+                    <div id="settings-loc-current" style="margin-top:8px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);display:flex;align-items:center;">
+                        <span style="font-size:13px;color:rgba(255,255,255,0.35);">No default location set</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
         <!-- WIDGETS — add / remove                                        -->
         <!-- ============================================================ -->
 
@@ -319,33 +345,16 @@
                         </div>
                     </div>
 
-                    <!-- Location (only for location-aware widgets) -->
+                    <!-- Location (unified dropdown for location-aware widgets) -->
                     {% if widget.get('lat') is not none or widget.get('timezone') is not none %}
                     <div class="control-section">
                         <label class="settings-input-label">Location</label>
-                        <div class="control-grid">
-                            {% if widget.get('lat') is not none %}
-                            <div class="control-item">
-                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Latitude</label>
-                                <input type="text" class="settings-input" id="lat-{{ loop.index0 }}" value="{{ widget.lat }}" style="font-size:13px;">
-                            </div>
-                            <div class="control-item">
-                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Longitude</label>
-                                <input type="text" class="settings-input" id="lng-{{ loop.index0 }}" value="{{ widget.lng }}" style="font-size:13px;">
-                            </div>
-                            {% endif %}
-                            {% if widget.get('timezone') is not none %}
-                            <div class="control-item">
-                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">Timezone</label>
-                                <input type="text" class="settings-input" id="tz-{{ loop.index0 }}" value="{{ widget.timezone }}" style="font-size:13px;" placeholder="Europe/London">
-                            </div>
-                            {% endif %}
-                            {% if widget.get('city') is not none %}
-                            <div class="control-item">
-                                <label class="settings-input-label" style="font-size:11px;opacity:0.5;">City label</label>
-                                <input type="text" class="settings-input" id="city-{{ loop.index0 }}" value="{{ widget.city }}" style="font-size:13px;" placeholder="DUB">
-                            </div>
-                            {% endif %}
+                        <div style="position:relative;">
+                            <input type="text" class="settings-input wloc-search" data-idx="{{ loop.index0 }}" placeholder="Search country..." autocomplete="off" style="margin-bottom:0;">
+                            <div class="wloc-dropdown" id="wloc-drop-{{ loop.index0 }}" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;max-height:180px;overflow-y:auto;background:rgba(28,28,30,0.96);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.1);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:1000;scrollbar-width:thin;"></div>
+                        </div>
+                        <div id="wloc-current-{{ loop.index0 }}" style="margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.04);font-size:12px;color:rgba(255,255,255,0.6);">
+                            {{ widget.get('city', '') }}{% if widget.get('timezone') %} &middot; {{ widget.timezone }}{% endif %}{% if widget.get('lat') is not none %} <span style="opacity:0.4;">({{ widget.lat }}, {{ widget.lng }})</span>{% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -355,16 +364,10 @@
                         <input type="hidden" name="action" value="update_widget">
                         <input type="hidden" name="id" value="{{ widget.id }}">
                         <input type="hidden" name="css" id="css-output-{{ loop.index0 }}" value="{{ widget.css }}">
-                        {% if widget.get('lat') is not none %}
-                        <input type="hidden" name="lat" id="lat-out-{{ loop.index0 }}" value="{{ widget.lat }}">
-                        <input type="hidden" name="lng" id="lng-out-{{ loop.index0 }}" value="{{ widget.lng }}">
-                        {% endif %}
-                        {% if widget.get('timezone') is not none %}
-                        <input type="hidden" name="timezone" id="tz-out-{{ loop.index0 }}" value="{{ widget.timezone }}">
-                        {% endif %}
-                        {% if widget.get('city') is not none %}
-                        <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.city }}">
-                        {% endif %}
+                        <input type="hidden" name="lat" id="lat-out-{{ loop.index0 }}" value="{{ widget.get('lat', '') }}">
+                        <input type="hidden" name="lng" id="lng-out-{{ loop.index0 }}" value="{{ widget.get('lng', '') }}">
+                        <input type="hidden" name="timezone" id="tz-out-{{ loop.index0 }}" value="{{ widget.get('timezone', '') }}">
+                        <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.get('city', '') }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -852,11 +855,6 @@
         window.saveWidget = function(idx) {
             var css = buildCSS(idx);
             document.getElementById('css-output-' + idx).value = css;
-            ['lat','lng','tz','city'].forEach(function(f) {
-                var inp = document.getElementById(f + '-' + idx);
-                var out = document.getElementById(f + '-out-' + idx);
-                if (inp && out) out.value = inp.value;
-            });
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });
@@ -905,6 +903,136 @@
                 })
                 .catch(function() { toast('Failed', 'err'); });
         };
+
+        // ============================================================
+        // Per-widget location dropdown
+        // ============================================================
+        var wlocCountries = null; // shared with settings location picker
+        function ensureCountries(cb) {
+            if (wlocCountries) { cb(wlocCountries); return; }
+            fetch('/api/countries').then(function(r){return r.json();}).then(function(d){
+                wlocCountries = d; cb(d);
+            });
+        }
+
+        document.querySelectorAll('.wloc-search').forEach(function(input) {
+            var idx = input.dataset.idx;
+            var drop = document.getElementById('wloc-drop-' + idx);
+
+            input.addEventListener('input', function() {
+                var q = this.value.toLowerCase().trim();
+                if (q.length < 1) { drop.style.display='none'; return; }
+                ensureCountries(function(countries) {
+                    var m = countries.filter(function(c){
+                        return c.name.toLowerCase().indexOf(q) !== -1 ||
+                               (c.capital && c.capital.toLowerCase().indexOf(q) !== -1);
+                    }).slice(0, 8);
+                    if (!m.length) { drop.style.display='none'; return; }
+                    drop.innerHTML = m.map(function(c){
+                        return "<div style='padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;transition:background 0.12s;' " +
+                            "onmouseover=\"this.style.background='rgba(255,255,255,0.06)'\" onmouseout=\"this.style.background='transparent'\" " +
+                            "data-lat='"+c.lat+"' data-lng='"+c.lng+"' data-name='"+c.name+"' data-cap='"+(c.capital||'')+"'>" +
+                            "<span style='font-size:13px;color:rgba(255,255,255,0.9);'>"+c.name+"</span>" +
+                            "<span style='font-size:11px;color:rgba(255,255,255,0.4);'>"+(c.capital||'')+"</span></div>";
+                    }).join('');
+                    drop.style.display = 'block';
+                });
+            });
+
+            drop.addEventListener('click', function(e) {
+                var opt = e.target.closest('[data-lat]');
+                if (!opt) return;
+                var lat = opt.dataset.lat, lng = opt.dataset.lng;
+                var name = opt.dataset.name, cap = opt.dataset.cap;
+                var city = cap || name;
+                // Set hidden form fields
+                document.getElementById('lat-out-' + idx).value = lat;
+                document.getElementById('lng-out-' + idx).value = lng;
+                document.getElementById('city-out-' + idx).value = city;
+                var currentEl = document.getElementById('wloc-current-' + idx);
+                currentEl.textContent = city + ' (resolving timezone\u2026)';
+                input.value = '';
+                drop.style.display = 'none';
+                // Resolve timezone
+                fetch('/api/timezone?lat=' + lat + '&lng=' + lng)
+                    .then(function(r){return r.json();})
+                    .then(function(d) {
+                        document.getElementById('tz-out-' + idx).value = d.timezone || '';
+                        currentEl.textContent = city + (d.timezone ? ' \u00b7 ' + d.timezone : '') + ' (' + lat + ', ' + lng + ')';
+                    })
+                    .catch(function() {
+                        currentEl.textContent = city + ' (' + lat + ', ' + lng + ')';
+                    });
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.wloc-search') && !e.target.closest('.wloc-dropdown')) {
+                document.querySelectorAll('.wloc-dropdown').forEach(function(d){ d.style.display='none'; });
+            }
+        });
+
+        // ============================================================
+        // Settings: Default Location picker
+        // ============================================================
+        (function() {
+            var sCountries = [];
+            var sInput = document.getElementById('settings-loc-search');
+            var sDrop = document.getElementById('settings-loc-dropdown');
+            var sCurrent = document.getElementById('settings-loc-current');
+            if (!sInput || !sDrop) return;
+
+            fetch('/api/countries').then(function(r){return r.json();}).then(function(d){ sCountries = d; });
+
+            sInput.addEventListener('input', function() {
+                var q = this.value.toLowerCase().trim();
+                if (q.length < 1) { sDrop.style.display='none'; return; }
+                var m = sCountries.filter(function(c){
+                    return c.name.toLowerCase().indexOf(q) !== -1 ||
+                           (c.capital && c.capital.toLowerCase().indexOf(q) !== -1);
+                }).slice(0, 10);
+                if (!m.length) { sDrop.style.display='none'; return; }
+                sDrop.innerHTML = m.map(function(c){
+                    return "<div style='padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;transition:background 0.12s;' " +
+                        "onmouseover=\"this.style.background='rgba(255,255,255,0.06)'\" onmouseout=\"this.style.background='transparent'\" " +
+                        "data-lat='"+c.lat+"' data-lng='"+c.lng+"' data-name='"+c.name+"' data-cap='"+(c.capital||'')+"'>" +
+                        "<span style='font-size:14px;color:rgba(255,255,255,0.9);'>"+c.name+"</span>" +
+                        "<span style='font-size:12px;color:rgba(255,255,255,0.4);'>"+(c.capital||'')+"</span></div>";
+                }).join('');
+                sDrop.style.display = 'block';
+            });
+
+            sDrop.addEventListener('click', function(e) {
+                var opt = e.target.closest('[data-lat]');
+                if (!opt) return;
+                var lat = opt.dataset.lat, lng = opt.dataset.lng;
+                var name = opt.dataset.name, cap = opt.dataset.cap;
+                var label = name + (cap ? ' \u2014 ' + cap : '');
+                // Resolve timezone then save
+                fetch('/api/timezone?lat=' + lat + '&lng=' + lng)
+                    .then(function(r){return r.json();})
+                    .then(function(d){ return d.timezone || ''; })
+                    .catch(function(){ return ''; })
+                    .then(function(tz) {
+                postAction('update_default_location', {default_lat: lat, default_lng: lng, default_city: cap || name, default_timezone: tz})
+                    .then(function(r) {
+                        if (r.status === 'ok') {
+                            var tzLabel = tz ? ' \u00b7 ' + tz : '';
+                            sCurrent.innerHTML = "<span style='font-size:13px;color:rgba(255,255,255,0.8);'>" + label + tzLabel +
+                                " <span style='opacity:0.4;'>(" + lat + ", " + lng + ")</span></span>";
+                            toast('Location updated', 'ok');
+                        } else toast('Failed', 'err');
+                    }).catch(function(){ toast('Failed', 'err'); });
+                }); // close .then(function(tz){...})
+                sInput.value = '';
+                sDrop.style.display = 'none';
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#settings-loc-search') && !e.target.closest('#settings-loc-dropdown'))
+                    sDrop.style.display = 'none';
+            });
+        })();
 
     })();
     </script>

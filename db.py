@@ -275,11 +275,22 @@ def get_preset_for_widget(device_type, widget_id):
     return None
 
 
-def init_device_widgets(device_id, device_type, base_widgets, selected_ids=None):
+# Widget IDs that use lat/lng location
+LOCATION_WIDGETS = {
+    'widget-apple-weather', 'widget-apple-sunrise',
+    'widget-apple-clock', 'widget-apple-clock-analogue-dark',
+    'widget-braun-clock',
+    'widget-google-wind', 'widget-google-weather-alerts',
+}
+
+
+def init_device_widgets(device_id, device_type, base_widgets, selected_ids=None,
+                        default_lat=None, default_lng=None, default_city=None,
+                        default_timezone=None):
     """Initialize widget layout for a new device using preset layouts.
 
-    If selected_ids is provided (set/list of widget ids), only those widgets
-    from the preset are inserted. Otherwise all preset widgets are inserted.
+    If selected_ids is provided, only those widgets are inserted.
+    If default location provided, overrides location on all location-aware widgets.
     """
     layout = get_preset_layout(device_type)
     base_ids = {bw['id'] for bw in base_widgets}
@@ -291,20 +302,38 @@ def init_device_widgets(device_id, device_type, base_widgets, selected_ids=None)
             continue
         if sel is not None and wid not in sel:
             continue
+        row_extra = dict(extra)
+        if wid in LOCATION_WIDGETS and default_lat is not None and default_lng is not None:
+            row_extra['lat'] = default_lat
+            row_extra['lng'] = default_lng
+            if default_city:
+                row_extra['city'] = default_city
+            if default_timezone:
+                row_extra['timezone'] = default_timezone
         conn.execute("""
             INSERT OR REPLACE INTO device_widgets
                 (device_id, widget_id, x, y, w, h, css, extra)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (device_id, wid, x, y, w, h, css, json.dumps(extra)))
+        """, (device_id, wid, x, y, w, h, css, json.dumps(row_extra)))
     conn.commit()
     conn.close()
 
 
-def add_device_widget(device_id, device_type, widget_id, base_widget=None):
+def add_device_widget(device_id, device_type, widget_id, base_widget=None,
+                      default_lat=None, default_lng=None, default_city=None,
+                      default_timezone=None):
     """Add a widget to a device using its preset layout (or sensible defaults)."""
     preset = get_preset_for_widget(device_type, widget_id)
     if preset:
         wid, x, y, w, h, css, extra = preset
+        extra = dict(extra)
+        if wid in LOCATION_WIDGETS and default_lat is not None and default_lng is not None:
+            extra['lat'] = default_lat
+            extra['lng'] = default_lng
+            if default_city:
+                extra['city'] = default_city
+            if default_timezone:
+                extra['timezone'] = default_timezone
     else:
         # Fall back to base widget defaults
         bw = base_widget or {}
