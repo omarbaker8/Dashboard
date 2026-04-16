@@ -243,6 +243,7 @@ _LAPTOP_LAYOUT = [
     ("widget-apple-pomodoro",             7,  3, 3, 3, GLASS_CSS,           {}),
     ("widget-apple-weather",             14,  4, 2, 2, GLASS_CSS,           {"lat": 52.0907, "lng": 5.1214, "timezone": "Europe/Amsterdam", "city": "Utrecht"}),
     ("widget-google-weather-alerts",     16,  4, 2, 2, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
+    ("widget-braun-clock",                0,  6, 3, 3, GLASS_CSS,           {"timezone": "Europe/Berlin", "city": "Berlin"}),
 ]
 
 _TABLET_LAYOUT = [
@@ -257,6 +258,7 @@ _TABLET_LAYOUT = [
     ("widget-apple-calendar",            4,  8, 4, 4, GLASS_CSS,           {}),
     ("widget-google-wind",               8,  8, 4, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
     ("widget-google-weather-alerts",     0, 12, 12, 3, GLASS_CSS,          {"lat": 53.35, "lng": -6.26}),
+    ("widget-braun-clock",              12,  8, 4, 4, GLASS_CSS,           {"timezone": "Europe/Berlin", "city": "Berlin"}),
 ]
 
 
