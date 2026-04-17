@@ -37,7 +37,8 @@
                      {% if widget.lat is defined %}data-lat="{{ widget.lat }}"{% endif %}
                      {% if widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}
                      {% if widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
-                     {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}>
+                     {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}
+                     {% if widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>

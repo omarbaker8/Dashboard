@@ -359,6 +359,34 @@
                     </div>
                     {% endif %}
 
+                    <!-- Refresh interval -->
+                    {% set _refresh_widgets = {
+                        'widget-google-calendar':       900,
+                        'widget-apple-bbc':             900,
+                        'widget-google-wind':           900,
+                        'widget-google-weather-alerts': 900,
+                        'widget-apple-weather':         900
+                    } %}
+                    {% if widget.id in _refresh_widgets %}
+                    {% set _def = _refresh_widgets[widget.id] %}
+                    {% set _cur = widget.get('refresh_interval', _def) %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Refresh Interval
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">default {{ _def }}s</span>
+                        </label>
+                        <select class="settings-native-select" id="refresh-{{ loop.index0 }}" data-idx="{{ loop.index0 }}">
+                            <option value="30"   {% if _cur == 30   %}selected{% endif %}>30 seconds</option>
+                            <option value="60"   {% if _cur == 60   %}selected{% endif %}>1 minute</option>
+                            <option value="120"  {% if _cur == 120  %}selected{% endif %}>2 minutes</option>
+                            <option value="300"  {% if _cur == 300  %}selected{% endif %}>5 minutes</option>
+                            <option value="600"  {% if _cur == 600  %}selected{% endif %}>10 minutes</option>
+                            <option value="900"  {% if _cur == 900  %}selected{% endif %}>15 minutes</option>
+                            <option value="1800" {% if _cur == 1800 %}selected{% endif %}>30 minutes</option>
+                            <option value="3600" {% if _cur == 3600 %}selected{% endif %}>1 hour</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
                     <!-- Save -->
                     <form method="POST" action="/settings" id="form-{{ loop.index0 }}">
                         <input type="hidden" name="action" value="update_widget">
@@ -368,6 +396,7 @@
                         <input type="hidden" name="lng" id="lng-out-{{ loop.index0 }}" value="{{ widget.get('lng', '') }}">
                         <input type="hidden" name="timezone" id="tz-out-{{ loop.index0 }}" value="{{ widget.get('timezone', '') }}">
                         <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.get('city', '') }}">
+                        <input type="hidden" name="refresh_interval" id="refresh-out-{{ loop.index0 }}" value="{{ widget.get('refresh_interval', _refresh_widgets.get(widget.id, 60)) }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -855,6 +884,10 @@
         window.saveWidget = function(idx) {
             var css = buildCSS(idx);
             document.getElementById('css-output-' + idx).value = css;
+            var refreshSel = document.getElementById('refresh-' + idx);
+            if (refreshSel) {
+                document.getElementById('refresh-out-' + idx).value = refreshSel.value;
+            }
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });

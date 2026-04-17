@@ -210,6 +210,12 @@ def settings():
                             val = request.form.get(key)
                             if val is not None:
                                 w[key] = val.strip()
+                        ri = request.form.get('refresh_interval')
+                        if ri is not None:
+                            try:
+                                w['refresh_interval'] = int(ri)
+                            except ValueError:
+                                pass
                         save_device_widget(device['id'], w)
                         break
             if is_ajax:
@@ -463,8 +469,8 @@ def api_google_wind():
         return jsonify({"error": "missing API key"}), 503
 
     try:
-        lat = float(request.args.get('lat', '53.35'))
-        lng = float(request.args.get('lng', '-6.26'))
+        lat = float(request.args.get('lat', '53.3498'))
+        lng = float(request.args.get('lng', '-6.2603'))
     except ValueError:
         return jsonify({"error": "invalid lat/lng"}), 400
 
@@ -516,8 +522,8 @@ def api_google_weather_alerts():
         return jsonify({"error": "missing API key"}), 503
 
     try:
-        lat = float(request.args.get('lat', '53.35'))
-        lng = float(request.args.get('lng', '-6.26'))
+        lat = float(request.args.get('lat', '53.3498'))
+        lng = float(request.args.get('lng', '-6.2603'))
     except ValueError:
         return jsonify({"error": "invalid lat/lng"}), 400
     lang = request.args.get('lang', 'en')
@@ -650,6 +656,13 @@ def api_timezone():
     except Exception as e:
         print(f"[timezone] lookup failed: {e}")
         return jsonify({"timezone": ""}), 502
+
+
+@app.route('/api/google_cal_url')
+def api_google_cal_url():
+    raw = os.getenv('GOOGLE_CAL_IFRAME_URL', '')
+    # Extract just the src URL from the iframe HTML if needed
+    return jsonify({"url": raw})
 
 
 if __name__ == '__main__':

@@ -232,33 +232,35 @@ DEFAULT_CONFIG = {
 # Pre-baked layouts from reference devices (proud-cloud laptop, winter-sparrow tablet)
 # Format: (widget_id, x, y, w, h, css, extra_dict)
 _LAPTOP_LAYOUT = [
-    ("widget-apple-clock",                0,  0, 3, 3, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "DUB"}),
+    ("widget-apple-clock",                0,  0, 3, 3, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-apple-calendar",             3,  0, 2, 2, GLASS_CSS,           {}),
     ("widget-apple-sunrise",              5,  0, 2, 2, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
     ("widget-apple-calendar-2",           7,  0, 3, 3, GLASS_CSS,           {}),
     ("widget-google-wind",               10,  0, 3, 3, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
     ("widget-apple-bbc",                 14,  0, 4, 4, GLASS_CSS,           {}),
-    ("widget-apple-clock-analogue-dark",  0,  3, 3, 3, GLASS_CSS,           {"timezone": "Europe/Amsterdam", "city": "AMS"}),
+    ("widget-apple-clock-analogue-dark",  0,  3, 3, 3, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-apple-unsplashed",           3,  2, 4, 4, GLASS_CSS,           {}),
     ("widget-apple-pomodoro",             7,  3, 3, 3, GLASS_CSS,           {}),
-    ("widget-apple-weather",             14,  4, 2, 2, GLASS_CSS,           {"lat": 52.0907, "lng": 5.1214, "timezone": "Europe/Amsterdam", "city": "Utrecht"}),
+    ("widget-apple-weather",             14,  4, 2, 2, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-weather-alerts",     16,  4, 2, 2, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
-    ("widget-braun-clock",                0,  6, 3, 3, GLASS_CSS,           {"timezone": "Europe/Berlin", "city": "Berlin"}),
+    ("widget-braun-clock",                0,  6, 3, 3, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
+    ("widget-google-calendar",           13,  4, 5, 5, GLASS_CSS,           {}),
 ]
 
 _TABLET_LAYOUT = [
-    ("widget-apple-clock",               0,  0, 4, 4, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "DUB"}),
+    ("widget-apple-clock",               0,  0, 4, 4, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-apple-calendar-2",          4,  0, 4, 4, GLASS_CSS,           {}),
     ("widget-apple-unsplashed",          8,  0, 4, 4, GLASS_CSS,           {}),
     ("widget-apple-bbc",                12,  0, 6,10, GLASS_CSS,           {}),
-    ("widget-apple-clock-analogue-dark",  0, 4, 4, 4, CLOCK_ANALOGUE_CSS,  {"timezone": "Europe/Amsterdam", "city": "AMS"}),
+    ("widget-apple-clock-analogue-dark",  0, 4, 4, 4, CLOCK_ANALOGUE_CSS,  {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-apple-sunrise",             4,  4, 4, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
-    ("widget-apple-weather",             8,  4, 4, 4, GLASS_CSS,           {"lat": 52.0907, "lng": 5.1214, "timezone": "Europe/Amsterdam", "city": "Utrecht"}),
+    ("widget-apple-weather",             8,  4, 4, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-apple-pomodoro",            0,  8, 4, 4, GLASS_CSS,           {}),
     ("widget-apple-calendar",            4,  8, 4, 4, GLASS_CSS,           {}),
     ("widget-google-wind",               8,  8, 4, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26}),
     ("widget-google-weather-alerts",     0, 12, 12, 3, GLASS_CSS,          {"lat": 53.35, "lng": -6.26}),
-    ("widget-braun-clock",              12,  8, 4, 4, GLASS_CSS,           {"timezone": "Europe/Berlin", "city": "Berlin"}),
+    ("widget-braun-clock",              12,  8, 4, 4, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
+    ("widget-google-calendar",           0, 15, 12, 6, GLASS_CSS,           {}),
 ]
 
 
