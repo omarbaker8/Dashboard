@@ -342,7 +342,7 @@
             <div class="location-section">
                 <div class="location-label">Default location</div>
                 <div class="location-search-wrap">
-                    <input type="text" class="location-input" id="loc-search" placeholder="Search country..." autocomplete="off">
+                    <input type="text" class="location-input" id="loc-search" placeholder="Search city..." autocomplete="off">
                     <div class="location-dropdown" id="loc-dropdown"></div>
                 </div>
                 <div class="location-selected" id="loc-selected">
@@ -380,64 +380,54 @@
         }
 
         // Location picker
-        var countries = [];
         var locSearch = document.getElementById('loc-search');
         var locDrop = document.getElementById('loc-dropdown');
         var locSel = document.getElementById('loc-selected');
-
-        fetch('/api/countries').then(function(r){return r.json();}).then(function(data){
-            countries = data;
-        });
+        var locTimer = null;
 
         locSearch.addEventListener('input', function() {
-            var q = this.value.toLowerCase().trim();
-            if (q.length < 1) { locDrop.classList.remove('open'); return; }
-            var matches = countries.filter(function(c) {
-                return c.name.toLowerCase().indexOf(q) !== -1 ||
-                       (c.capital && c.capital.toLowerCase().indexOf(q) !== -1);
-            }).slice(0, 12);
-            if (!matches.length) { locDrop.classList.remove('open'); return; }
-            locDrop.innerHTML = matches.map(function(c) {
-                return "<div class='location-opt' data-lat='"+c.lat+"' data-lng='"+c.lng+"' data-name='"+c.name+"' data-cap='"+(c.capital||'')+"'>" +
-                    "<span class='loc-name'>"+c.name+"</span>" +
-                    "<span class='loc-cap'>"+(c.capital||'')+"</span></div>";
-            }).join('');
-            locDrop.classList.add('open');
+            var q = this.value.trim();
+            if (q.length < 2) { locDrop.classList.remove('open'); return; }
+            clearTimeout(locTimer);
+            locTimer = setTimeout(function() {
+                fetch('/api/cities?q=' + encodeURIComponent(q))
+                    .then(function(r){ return r.json(); })
+                    .then(function(cities) {
+                        if (!cities.length) { locDrop.classList.remove('open'); return; }
+                        locDrop.innerHTML = cities.map(function(c) {
+                            return "<div class='location-opt' data-lat='"+c.lat+"' data-lng='"+c.lng+"' data-name='"+c.name+"' data-tz='"+(c.timezone||'')+"' data-sub='"+(c.subtitle||'')+"'>" +
+                                "<span class='loc-name'>"+c.name+"</span>" +
+                                "<span class='loc-cap'>"+(c.subtitle||'')+"</span></div>";
+                        }).join('');
+                        locDrop.classList.add('open');
+                    });
+            }, 250);
         });
 
         locSearch.addEventListener('focus', function() {
-            if (this.value.length >= 1) this.dispatchEvent(new Event('input'));
+            if (this.value.length >= 2) this.dispatchEvent(new Event('input'));
         });
 
         locDrop.addEventListener('click', function(e) {
             var opt = e.target.closest('.location-opt');
             if (!opt) return;
-            selectLocation(opt.dataset.name, opt.dataset.cap, opt.dataset.lat, opt.dataset.lng);
+            selectLocation(opt.dataset.name, opt.dataset.sub, opt.dataset.lat, opt.dataset.lng, opt.dataset.tz || '');
         });
 
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.location-search-wrap')) locDrop.classList.remove('open');
         });
 
-        function selectLocation(name, cap, lat, lng) {
+        function selectLocation(name, sub, lat, lng, tz) {
             document.getElementById('loc-lat').value = lat;
             document.getElementById('loc-lng').value = lng;
-            document.getElementById('loc-city').value = cap || name;
-            var label = name + (cap ? ' \u2014 ' + cap : '');
-            document.getElementById('loc-sel-name').textContent = label + ' (resolving timezone\u2026)';
+            document.getElementById('loc-city').value = name;
+            document.getElementById('loc-tz').value = tz;
+            var label = name + (sub ? ' \u2014 ' + sub : '');
+            document.getElementById('loc-sel-name').textContent = label + (tz ? ' \u00b7 ' + tz : '');
             locSel.classList.add('show');
             locSearch.value = '';
             locDrop.classList.remove('open');
-            // Resolve IANA timezone from coordinates
-            fetch('/api/timezone?lat=' + lat + '&lng=' + lng)
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    document.getElementById('loc-tz').value = d.timezone || '';
-                    document.getElementById('loc-sel-name').textContent = label + (d.timezone ? ' \u00b7 ' + d.timezone : '');
-                })
-                .catch(function() {
-                    document.getElementById('loc-sel-name').textContent = label;
-                });
         }
 
         function clearLocation() {

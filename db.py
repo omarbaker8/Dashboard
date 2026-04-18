@@ -246,6 +246,7 @@ _LAPTOP_LAYOUT = [
     ("widget-braun-clock",                0,  6, 3, 3, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-calendar",           13,  4, 5, 5, GLASS_CSS,           {}),
     ("widget-nothing-watch",              3,  6, 3, 3, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
+    ("widget-google-weather",            10,  4, 8, 3, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
 ]
 
 _TABLET_LAYOUT = [
@@ -263,6 +264,7 @@ _TABLET_LAYOUT = [
     ("widget-braun-clock",              12,  8, 4, 4, GLASS_CSS,           {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-calendar",           0, 15, 12, 6, GLASS_CSS,           {}),
     ("widget-nothing-watch",             0, 21,  4, 4, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
+    ("widget-google-weather",            4, 10,  8, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
 ]
 
 
@@ -285,6 +287,7 @@ LOCATION_WIDGETS = {
     'widget-apple-clock', 'widget-apple-clock-analogue-dark',
     'widget-braun-clock', 'widget-nothing-watch',
     'widget-google-wind', 'widget-google-weather-alerts',
+    'widget-google-weather',
 }
 
 

@@ -216,6 +216,12 @@ def settings():
                                 w['refresh_interval'] = int(ri)
                             except ValueError:
                                 pass
+                        hts = request.form.get('hours_to_show')
+                        if hts is not None:
+                            try:
+                                w['hours_to_show'] = max(1, min(12, int(hts)))
+                            except ValueError:
+                                pass
                         save_device_widget(device['id'], w)
                         break
             if is_ajax:
@@ -584,44 +590,44 @@ def api_google_weather_alerts():
 
 
 # ---------------------------------------------------------------------------
-# API: Countries list (for location picker) — cached indefinitely
+# API: City search (for location picker) — live via Open-Meteo Geocoding, no key needed
 # ---------------------------------------------------------------------------
 
-_countries_cache = None
-
-
-@app.route('/api/countries')
-def api_countries():
-    global _countries_cache
-    if _countries_cache:
-        return jsonify(_countries_cache)
-
+@app.route('/api/cities')
+def api_cities():
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return jsonify([])
     try:
-        url = 'https://restcountries.com/v3.1/all?fields=name,latlng,capital,timezones'
+        params = urllib.parse.urlencode({
+            'name': q, 'count': 10, 'language': 'en', 'format': 'json'
+        })
+        url = f'https://geocoding-api.open-meteo.com/v1/search?{params}'
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            raw = json.loads(r.read())
-
-        countries = []
-        for c in raw:
-            name = c.get('name', {}).get('common', '')
-            ll = c.get('latlng', [0, 0])
-            caps = c.get('capital', [])
-            tzs = c.get('timezones', [])
-            if not name or len(ll) < 2:
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read())
+        results = []
+        for c in data.get('results') or []:
+            name = c.get('name', '')
+            country = c.get('country', '')
+            admin1 = c.get('admin1', '')
+            lat = c.get('latitude')
+            lng = c.get('longitude')
+            tz = c.get('timezone', '')
+            if not name or lat is None or lng is None:
                 continue
-            countries.append({
+            # Build subtitle: "Region, Country" or just "Country"
+            subtitle = ', '.join(filter(None, [admin1, country]))
+            results.append({
                 'name': name,
-                'capital': caps[0] if caps else '',
-                'lat': round(ll[0], 4),
-                'lng': round(ll[1], 4),
-                'tz': tzs[0] if tzs else '',
+                'subtitle': subtitle,
+                'lat': round(lat, 4),
+                'lng': round(lng, 4),
+                'timezone': tz,
             })
-        countries.sort(key=lambda x: x['name'])
-        _countries_cache = countries
-        return jsonify(countries)
+        return jsonify(results)
     except Exception as e:
-        print(f"[countries] fetch failed: {e}")
+        print(f"[cities] search failed: {e}")
         return jsonify([]), 502
 
 

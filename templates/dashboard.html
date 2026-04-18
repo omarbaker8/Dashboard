@@ -38,7 +38,8 @@
                      {% if widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}
                      {% if widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
                      {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}
-                     {% if widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}>
+                     {% if widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}
+                     {% if widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>
