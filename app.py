@@ -465,13 +465,30 @@ def api_bbc_news():
 
 GOOGLE_WEATHER_URL = 'https://weather.googleapis.com/v1/currentConditions:lookup'
 _wind_cache = {}  # {(lat,lng): {'ts': ..., 'data': ...}}
+
+
+def _google_weather_fetch(url_base, params_base):
+    """Try GOOGLE_WEATHER_KEY then GOOGLE_WEATHER_KEY_2 on any failure."""
+    keys = [k for k in [os.getenv('GOOGLE_WEATHER_KEY'), os.getenv('GOOGLE_WEATHER_KEY_2')] if k]
+    if not keys:
+        raise ValueError("no Google Weather API key configured")
+    last_exc = None
+    for key in keys:
+        try:
+            params = urllib.parse.urlencode({**params_base, 'key': key})
+            req = urllib.request.Request(f'{url_base}?{params}')
+            with urllib.request.urlopen(req, timeout=8) as r:
+                return json.loads(r.read())
+        except Exception as e:
+            print(f"[google_weather] key failed ({key[:8]}…): {e}")
+            last_exc = e
+    raise last_exc
 _WIND_TTL = 600  # 10 minutes
 
 
 @app.route('/api/google_wind')
 def api_google_wind():
-    key = os.getenv('GOOGLE_WEATHER_KEY')
-    if not key:
+    if not (os.getenv('GOOGLE_WEATHER_KEY') or os.getenv('GOOGLE_WEATHER_KEY_2')):
         return jsonify({"error": "missing API key"}), 503
 
     try:
@@ -487,14 +504,10 @@ def api_google_wind():
         return jsonify(cached['data'])
 
     try:
-        params = urllib.parse.urlencode({
-            'key': key,
+        full = _google_weather_fetch(GOOGLE_WEATHER_URL, {
             'location.latitude': lat,
             'location.longitude': lng,
         })
-        req = urllib.request.Request(f'{GOOGLE_WEATHER_URL}?{params}')
-        with urllib.request.urlopen(req, timeout=8) as r:
-            full = json.loads(r.read())
         wind = full.get('wind', {})
         result = {
             'speed': (wind.get('speed') or {}).get('value'),
@@ -523,8 +536,7 @@ _ALERTS_TTL = 300  # 5 minutes
 
 @app.route('/api/google_weather_alerts')
 def api_google_weather_alerts():
-    key = os.getenv('GOOGLE_WEATHER_KEY')
-    if not key:
+    if not (os.getenv('GOOGLE_WEATHER_KEY') or os.getenv('GOOGLE_WEATHER_KEY_2')):
         return jsonify({"error": "missing API key"}), 503
 
     try:
@@ -541,15 +553,11 @@ def api_google_weather_alerts():
         return jsonify(cached['data'])
 
     try:
-        params = urllib.parse.urlencode({
-            'key': key,
+        full = _google_weather_fetch(GOOGLE_ALERTS_URL, {
             'location.latitude': lat,
             'location.longitude': lng,
             'languageCode': lang,
         })
-        req = urllib.request.Request(f'{GOOGLE_ALERTS_URL}?{params}')
-        with urllib.request.urlopen(req, timeout=8) as r:
-            full = json.loads(r.read())
 
         alerts_in = full.get('weatherAlerts', []) or []
         alerts = []
