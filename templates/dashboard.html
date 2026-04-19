@@ -39,7 +39,10 @@
                      {% if widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
                      {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}
                      {% if widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}
-                     {% if widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}>
+                     {% if widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}
+                     {% if widget.levels is defined %}data-levels="{{ widget.levels }}"{% endif %}
+                     {% if widget.stroke is defined %}data-stroke="{{ widget.stroke }}"{% endif %}
+                     {% if widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>

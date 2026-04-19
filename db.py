@@ -247,6 +247,7 @@ _LAPTOP_LAYOUT = [
     ("widget-google-calendar",           13,  4, 5, 5, GLASS_CSS,           {}),
     ("widget-nothing-watch",              3,  6, 3, 3, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-weather",            10,  4, 8, 3, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
+    ("widget-mondrian",                   6,  7, 4, 4, "background-color: #F5F0E6; border-radius: min(28px, 15cqmin); overflow: hidden; box-shadow: 0 6px 28px rgba(0,0,0,0.5); border: 2px solid #111;", {"levels": 4, "stroke": 2, "split_ratio": 0.5}),
 ]
 
 _TABLET_LAYOUT = [
@@ -265,6 +266,7 @@ _TABLET_LAYOUT = [
     ("widget-google-calendar",           0, 15, 12, 6, GLASS_CSS,           {}),
     ("widget-nothing-watch",             0, 21,  4, 4, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-weather",            4, 10,  8, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
+    ("widget-mondrian",                  0, 25,  4, 4, "background-color: #F5F0E6; border-radius: min(28px, 15cqmin); overflow: hidden; box-shadow: 0 6px 28px rgba(0,0,0,0.5); border: 2px solid #111;", {"levels": 4, "stroke": 2, "split_ratio": 0.5}),
 ]
 
 

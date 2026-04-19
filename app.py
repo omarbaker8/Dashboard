@@ -222,6 +222,24 @@ def settings():
                                 w['hours_to_show'] = max(1, min(12, int(hts)))
                             except ValueError:
                                 pass
+                        _lv = request.form.get('levels')
+                        if _lv is not None:
+                            try:
+                                w['levels'] = max(1, min(10, int(_lv)))
+                            except ValueError:
+                                pass
+                        _st = request.form.get('stroke')
+                        if _st is not None:
+                            try:
+                                w['stroke'] = max(0.0, min(20.0, float(_st)))
+                            except ValueError:
+                                pass
+                        _sr = request.form.get('split_ratio')
+                        if _sr is not None:
+                            try:
+                                w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
+                            except ValueError:
+                                pass
                         save_device_widget(device['id'], w)
                         break
             if is_ajax:

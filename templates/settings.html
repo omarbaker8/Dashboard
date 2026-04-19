@@ -346,7 +346,8 @@
                     </div>
 
                     <!-- Location (unified dropdown for location-aware widgets) -->
-                    {% if widget.get('lat') is not none or widget.get('timezone') is not none %}
+                    {% set _loc_widget_ids = ['widget-apple-weather','widget-apple-sunrise','widget-apple-clock','widget-apple-clock-analogue-dark','widget-braun-clock','widget-nothing-watch','widget-google-wind','widget-google-weather-alerts','widget-google-weather'] %}
+                    {% if widget.id in _loc_widget_ids and (widget.get('lat') is not none or widget.get('timezone') is not none) %}
                     <div class="control-section">
                         <label class="settings-input-label">Location</label>
                         <div style="position:relative;">
@@ -388,6 +389,37 @@
                     </div>
                     {% endif %}
 
+                    <!-- Mondrian settings -->
+                    {% if widget.id == 'widget-mondrian' %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Levels
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">complexity 1–10</span>
+                        </label>
+                        <select class="settings-native-select" id="mon-levels-{{ loop.index0 }}">
+                            {% for _l in range(1, 11) %}
+                            <option value="{{ _l }}" {% if widget.get('levels', 4) == _l %}selected{% endif %}>{{ _l }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="control-section">
+                        <label class="settings-input-label">Stroke
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">0 to disable</span>
+                        </label>
+                        <input type="number" class="settings-input" id="mon-stroke-{{ loop.index0 }}" min="0" max="20" step="0.5" value="{{ widget.get('stroke', 2) }}" style="margin-bottom:0;">
+                    </div>
+                    <div class="control-section">
+                        <label class="settings-input-label">Grid Detail
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">cut density</span>
+                        </label>
+                        <select class="settings-native-select" id="mon-split-{{ loop.index0 }}">
+                            {% set _sp = widget.get('split_ratio', 0.5) %}
+                            <option value="0.1" {% if _sp < 0.3 %}selected{% endif %}>Coarse</option>
+                            <option value="0.5" {% if 0.3 <= _sp < 0.6 %}selected{% endif %}>Medium</option>
+                            <option value="0.8" {% if _sp >= 0.6 %}selected{% endif %}>Fine</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
                     <!-- Hours to show (google-weather only) -->
                     {% if widget.id == 'widget-google-weather' %}
                     {% set _hrs = widget.get('hours_to_show', 3) %}
@@ -416,6 +448,9 @@
                         <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.get('city', '') }}">
                         <input type="hidden" name="refresh_interval" id="refresh-out-{{ loop.index0 }}" value="{{ widget.get('refresh_interval', _refresh_widgets.get(widget.id, 60)) }}">
                         <input type="hidden" name="hours_to_show" id="hours-out-{{ loop.index0 }}" value="{{ widget.get('hours_to_show', 3) }}">
+                        <input type="hidden" name="levels" id="mon-levels-out-{{ loop.index0 }}" value="{{ widget.get('levels', 4) }}">
+                        <input type="hidden" name="stroke" id="mon-stroke-out-{{ loop.index0 }}" value="{{ widget.get('stroke', 2) }}">
+                        <input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -911,6 +946,12 @@
             if (hoursSel) {
                 document.getElementById('hours-out-' + idx).value = hoursSel.value;
             }
+            var monLevels = document.getElementById('mon-levels-' + idx);
+            if (monLevels) document.getElementById('mon-levels-out-' + idx).value = monLevels.value;
+            var monStroke = document.getElementById('mon-stroke-' + idx);
+            if (monStroke) document.getElementById('mon-stroke-out-' + idx).value = monStroke.value;
+            var monSplit = document.getElementById('mon-split-' + idx);
+            if (monSplit) document.getElementById('mon-split-out-' + idx).value = monSplit.value;
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });
