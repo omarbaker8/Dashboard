@@ -240,6 +240,11 @@ def settings():
                                 w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
                             except ValueError:
                                 pass
+                        _kc = request.form.get('kagi_categories')
+                        if _kc is not None:
+                            cats = [c.strip() for c in _kc.split(',') if c.strip()]
+                            if cats:
+                                w['categories'] = cats
                         save_device_widget(device['id'], w)
                         break
             if is_ajax:
@@ -852,6 +857,91 @@ def api_google_cal_url():
     raw = os.getenv('GOOGLE_CAL_IFRAME_URL', '')
     # Extract just the src URL from the iframe HTML if needed
     return jsonify({"url": raw})
+
+
+# ---------------------------------------------------------------------------
+# API: Kagi News stories (science, tech, ai)
+# ---------------------------------------------------------------------------
+
+KAGI_API_BASE = 'https://kite.kagi.com/api'
+_KAGI_HEADERS = {
+    'Accept': 'application/json',
+    'User-Agent': 'KagiNews/1.1.0 (Android)',
+    '-acx-global-context': '{"platform":"android","app_version":"1.1.0","build":"84","client":"com.kagi.news"}',
+}
+_KAGI_CATEGORIES = ['science', 'tech', 'ai']
+_KAGI_GRADIENTS = {
+    'science': 'linear-gradient(160deg,#0f2027,#203a43,#2c5364)',
+    'tech':    'linear-gradient(160deg,#0f0c29,#302b63,#24243e)',
+    'ai':      'linear-gradient(160deg,#0d0221,#1b1b2f,#3a1a6e)',
+}
+_kagi_cache = {'ts': 0, 'stories': []}
+_KAGI_TTL = 1800  # 30 min — Kagi batches are daily
+
+def _kagi_get(path, params=None):
+    url = f'{KAGI_API_BASE}{path}'
+    if params:
+        url += '?' + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
+    req = urllib.request.Request(url, headers=_KAGI_HEADERS)
+    with urllib.request.urlopen(req, timeout=12) as resp:
+        return json.loads(resp.read())
+
+
+def fetch_kagi_stories(categories=None):
+    if categories is None:
+        categories = _KAGI_CATEGORIES
+    now = time.time()
+    cache_key = ','.join(sorted(categories))
+    if (_kagi_cache.get('key') == cache_key and
+            _kagi_cache['stories'] and (now - _kagi_cache['ts']) < _KAGI_TTL):
+        return _kagi_cache['stories']
+
+    try:
+        # 1. Resolve batch_id + category UUIDs from latest batch
+        resp = _kagi_get('/batches/latest/categories', {'lang': 'default'})
+        batch_id = resp.get('batchId', '')
+        cat_list = resp.get('categories', [])
+        cat_map = {c['categoryId']: c['id'] for c in cat_list}
+
+        stories = []
+        for cat_id in categories:
+            uuid = cat_map.get(cat_id)
+            if not uuid:
+                print(f'[kagi] category {cat_id!r} not found in batch')
+                continue
+            try:
+                data = _kagi_get(f'/batches/{batch_id}/categories/{uuid}/stories', {'limit': 5, 'lang': 'default'})
+                for s in data.get('stories', []):
+                    img = (s.get('primary_image') or {}).get('url') or (s.get('secondary_image') or {}).get('url') or ''
+                    sources = [d['name'] for d in (s.get('domains') or [])[:3]]
+                    url = next((a['link'] for a in (s.get('articles') or []) if a.get('link')), '')
+                    stories.append({
+                        'title':    s.get('title', '').strip(),
+                        'summary':  s.get('short_summary', '').strip(),
+                        'image':    img,
+                        'gradient': _KAGI_GRADIENTS.get(cat_id, _KAGI_GRADIENTS['tech']),
+                        'category': cat_id.upper(),
+                        'sources':  sources,
+                        'url':      url,
+                    })
+            except Exception as e:
+                print(f'[kagi] stories for {cat_id} failed: {e}')
+
+        if stories:
+            _kagi_cache['stories'] = stories
+            _kagi_cache['ts'] = now
+            _kagi_cache['key'] = cache_key
+        return stories
+    except Exception as e:
+        print(f'[kagi] fetch failed: {e}')
+        return _kagi_cache['stories']
+
+
+@app.route('/api/kagi_stories')
+def api_kagi_stories():
+    raw = request.args.get('categories', '')
+    cats = [c.strip() for c in raw.split(',') if c.strip()] if raw else None
+    return jsonify(fetch_kagi_stories(cats))
 
 
 if __name__ == '__main__':

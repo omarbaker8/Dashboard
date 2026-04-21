@@ -366,6 +366,7 @@
                         'widget-google-calendar':       900,
                         'widget-apple-bbc':             900,
                         'widget-ap-news':               900,
+                        'widget-kagi-news':             1800,
                         'widget-google-wind':           900,
                         'widget-google-weather-alerts': 900,
                         'widget-apple-weather':         900,
@@ -422,6 +423,36 @@
                     </div>
                     {% endif %}
 
+                    <!-- Kagi News category selection -->
+                    {% if widget.id == 'widget-kagi-news' %}
+                    {% set _kagi_cats = widget.get('categories', ['tech','ai','science']) %}
+                    {% set _kagi_all = [
+                        ('world','World'),('tech','Tech'),('ai','AI'),('science','Science'),
+                        ('business','Business'),('sports','Sports'),('entertainment','Entertainment'),
+                        ('gaming','Gaming'),('medicine','Medicine'),('economy','Economy'),
+                        ('climate_change','Climate'),('cybersecurity','Cybersecurity'),
+                        ('cryptocurrency','Crypto'),('bitcoin','Bitcoin'),('privacy','Privacy'),
+                        ('linux_oss','Linux / OSS'),('aviation','Aviation'),('formula_1','Formula 1'),
+                        ('nba','NBA'),('nfl','NFL'),('nhl','NHL'),('mlb','MLB'),('soccer','Soccer'),
+                        ('music','Music'),('movies','Movies'),
+                        ('india','India'),('china','China'),('japan','Japan'),('germany','Germany'),
+                        ('france','France'),('uk','UK'),('usa','USA'),('australia','Australia'),
+                        ('canada','Canada'),('brazil','Brazil'),('russia','Russia'),('ukraine','Ukraine'),
+                        ('middle_east','Middle East'),('asia','Asia'),('europe','Europe'),('africa','Africa')
+                    ] %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Categories</label>
+                        <div id="kagi-cats-{{ loop.index0 }}" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:6px;">
+                            {% for _cid, _clabel in _kagi_all %}
+                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:rgba(255,255,255,0.7);cursor:pointer;padding:2px 0;">
+                                <input type="checkbox" value="{{ _cid }}" {% if _cid in _kagi_cats %}checked{% endif %} style="accent-color:#fff;cursor:pointer;">
+                                {{ _clabel }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Hours to show (google-weather only) -->
                     {% if widget.id == 'widget-google-weather' %}
                     {% set _hrs = widget.get('hours_to_show', 3) %}
@@ -453,6 +484,7 @@
                         <input type="hidden" name="levels" id="mon-levels-out-{{ loop.index0 }}" value="{{ widget.get('levels', 4) }}">
                         <input type="hidden" name="stroke" id="mon-stroke-out-{{ loop.index0 }}" value="{{ widget.get('stroke', 2) }}">
                         <input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">
+                        <input type="hidden" name="kagi_categories" id="kagi-cats-out-{{ loop.index0 }}" value="{{ widget.get('categories', ['tech','ai','science']) | join(',') }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -954,6 +986,11 @@
             if (monStroke) document.getElementById('mon-stroke-out-' + idx).value = monStroke.value;
             var monSplit = document.getElementById('mon-split-' + idx);
             if (monSplit) document.getElementById('mon-split-out-' + idx).value = monSplit.value;
+            var kagiCatsBox = document.getElementById('kagi-cats-' + idx);
+            if (kagiCatsBox) {
+                var checked = Array.from(kagiCatsBox.querySelectorAll('input[type=checkbox]:checked')).map(function(cb){return cb.value;});
+                document.getElementById('kagi-cats-out-' + idx).value = checked.join(',');
+            }
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });

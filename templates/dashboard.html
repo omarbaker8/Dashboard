@@ -43,7 +43,8 @@
                      {% if widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}
                      {% if widget.levels is defined %}data-levels="{{ widget.levels }}"{% endif %}
                      {% if widget.stroke is defined %}data-stroke="{{ widget.stroke }}"{% endif %}
-                     {% if widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}>
+                     {% if widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}
+                     {% if widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>
