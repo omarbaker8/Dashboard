@@ -478,6 +478,163 @@ def api_bbc_news():
 
 
 # ---------------------------------------------------------------------------
+# API: AP News
+# ---------------------------------------------------------------------------
+
+AP_GRAPHQL_URL = 'https://apnews.com/graphql/delivery/ap/v1'
+AP_BASE_URL    = 'https://apnews.com'
+_ap_cache = {'ts': 0, 'groups': []}
+_AP_TTL = 300
+
+_AP_HEADERS = {
+    'User-Agent':   'mnn.Android',
+    'Content-Type': 'application/json',
+    'Accept':       'application/json',
+}
+
+# Hub query — returns PagePromo items with category + liveEvent flag
+_AP_QUERY_HUB = (
+    'query Q($path:String,$adLite:Boolean){'
+    'Screen(path:$path,adLite:$adLite){'
+    'main{__typename'
+    '...on ColumnContainer{columns{__typename'
+    '...on PageListModule{items{__typename'
+    '...on PagePromo{title url category liveEvent}'
+    '}}}}}}'
+    '}'
+)
+
+# WebQuery — used for /live/ paths discovered via homepage scrape (same as ap.py)
+_AP_QUERY_WEB = (
+    'query WebQuery($path:String,$adLite:Boolean){'
+    'Web(path:$path,adLite:$adLite){headline category}'
+    '}'
+)
+
+_AP_LIVE_RE = re.compile(r'apnews\.com(/live/[a-z0-9-]+)')
+
+# Only /hub/apf-topnews works from the old APK paths.
+# Technology and Science use the real hub paths discovered from the homepage.
+# Category values actually returned by AP: "World News", "U.S. News", "Business",
+# "Politics", "Sports", "Science", "Health", "Entertainment" — no "Technology" category.
+# AI/tech articles come back as "Business", so we use the /hub/artificial-intelligence
+# path and bucket by source hub, not category.
+_AP_HUB_SECTIONS = [
+    ('top-news',   '/hub/apf-topnews'),
+    ('technology', '/hub/artificial-intelligence'),
+    ('science',    '/hub/space'),
+]
+
+
+def _ap_graphql(query, variables):
+    payload = json.dumps({'query': query, 'variables': variables}).encode('utf-8')
+    req = urllib.request.Request(AP_GRAPHQL_URL, data=payload, headers=_AP_HEADERS, method='POST')
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return json.loads(resp.read())
+
+
+def _ap_fetch_live_blogs():
+    """Scrape AP homepage for /live/ paths, query each via WebQuery — mirrors ap.py get_live_blogs()."""
+    req = urllib.request.Request(AP_BASE_URL, headers={'User-Agent': 'mnn.Android', 'Accept': 'text/html'})
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        html = resp.read().decode('utf-8', errors='replace')
+    live_paths = list(dict.fromkeys(_AP_LIVE_RE.findall(html)))
+    results = []
+    for path in live_paths[:6]:
+        try:
+            data = _ap_graphql(_AP_QUERY_WEB, {'path': path, 'adLite': True})
+            web = (data.get('data') or {}).get('Web') or {}
+            if web.get('headline'):
+                results.append({'title': web['headline'], 'url': f'{AP_BASE_URL}{path}', 'isLive': True})
+        except Exception as e:
+            print(f'[ap_news] live blog {path} failed: {e}')
+    return results
+
+
+def _ap_fetch_hub(path):
+    """Fetch one hub section. Returns list of raw PagePromo dicts."""
+    data = _ap_graphql(_AP_QUERY_HUB, {'path': path, 'adLite': True})
+    items = []
+    screen = (data.get('data') or {}).get('Screen') or {}
+    for block in (screen.get('main') or []):
+        for col in (block.get('columns') or []):
+            for item in (col.get('items') or []):
+                if item.get('__typename') == 'PagePromo' and item.get('title'):
+                    items.append(item)
+    return items
+
+
+def fetch_ap_news():
+    now = time.time()
+    if _ap_cache['groups'] and (now - _ap_cache['ts']) < _AP_TTL:
+        return _ap_cache['groups']
+
+    seen_urls = set()
+    buckets = {'live': [], 'world': [], 'technology': [], 'science': [], 'top': []}
+
+    # 1. Live blogs via homepage scrape (the source the original script uses)
+    try:
+        for lb in _ap_fetch_live_blogs():
+            url = lb['url']
+            if url not in seen_urls:
+                seen_urls.add(url)
+                buckets['live'].append(lb)
+    except Exception as e:
+        print(f'[ap_news] live blogs failed: {e}')
+
+    # 2. Hub sections
+    # top-news: route by category ("World News" → world, liveEvent → live, rest → top)
+    # technology hub (/hub/artificial-intelligence): all articles → technology (no "Technology" category exists)
+    # science hub (/hub/space): all articles → science (category is "Science")
+    for key, path in _AP_HUB_SECTIONS:
+        try:
+            raw = _ap_fetch_hub(path)
+        except Exception as e:
+            print(f'[ap_news] hub {key} failed: {e}')
+            raw = []
+        for item in raw:
+            url = item.get('url', '')
+            if not url or url in seen_urls:
+                continue
+            seen_urls.add(url)
+            a = {'title': item['title'].strip(), 'url': url, 'isLive': False}
+            cat = item.get('category') or ''
+            if item.get('liveEvent'):
+                a['isLive'] = True
+                buckets['live'].append(a)
+            elif key == 'technology':
+                buckets['technology'].append(a)
+            elif key == 'science':
+                buckets['science'].append(a)
+            elif cat == 'World News':
+                buckets['world'].append(a)
+            else:
+                buckets['top'].append(a)
+
+    groups = []
+    if buckets['live']:
+        groups.append({'label': 'Live',        'items': buckets['live'][:4]})
+    if buckets['world']:
+        groups.append({'label': 'World News',  'items': buckets['world'][:4]})
+    if buckets['technology']:
+        groups.append({'label': 'Technology',  'items': buckets['technology'][:3]})
+    if buckets['science']:
+        groups.append({'label': 'Science',     'items': buckets['science'][:3]})
+    if buckets['top']:
+        groups.append({'label': 'Top Stories', 'items': buckets['top'][:4]})
+
+    if groups:
+        _ap_cache['groups'] = groups
+        _ap_cache['ts'] = now
+    return groups
+
+
+@app.route('/api/ap_news')
+def api_ap_news():
+    return jsonify(fetch_ap_news())
+
+
+# ---------------------------------------------------------------------------
 # API: Google Weather (wind) — keyed by lat/lng, cached 10 minutes per location
 # ---------------------------------------------------------------------------
 
