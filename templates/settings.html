@@ -780,7 +780,7 @@
         var aerialPollers = {}; // {id: intervalId}
         var currentBgVideo = '{{ config.bg_video | default("") }}';
 
-        function aerialLocalUrl(id) { return '/static/aerials/' + id + '.mov'; }
+        function aerialLocalUrl(id) { return '/static/aerials/' + id + '.mp4'; }
 
         function renderAerials(items) {
             var g = document.getElementById('aerial-gallery');

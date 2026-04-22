@@ -386,7 +386,7 @@ def api_aerials():
     result = []
     for item in _AERIAL_CATALOG:
         vid_id = item['id']
-        local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+        local_path = os.path.join(AERIALS_DIR, vid_id + '.mp4')
         if os.path.exists(local_path):
             status = 'ready'
             progress = 100
@@ -413,7 +413,7 @@ def api_aerials_download():
     if not item:
         return jsonify({'error': 'not found'}), 404
 
-    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mp4')
     if os.path.exists(local_path):
         _aerial_downloads[vid_id] = {'status': 'ready', 'progress': 100}
         return jsonify({'status': 'ready'})
@@ -424,18 +424,46 @@ def api_aerials_download():
     url = item.get('url_1080_h264') or item.get('url_1080_sdr', '')
     _aerial_downloads[vid_id] = {'status': 'downloading', 'progress': 0}
 
+    def _ffmpeg_path():
+        for p in ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/usr/bin/ffmpeg']:
+            if os.path.isfile(p):
+                return p
+        import shutil
+        return shutil.which('ffmpeg')
+
     def do_download():
+        tmp_path = local_path + '.tmp.mov'
         try:
             def reporthook(count, block_size, total_size):
                 if total_size > 0:
-                    _aerial_downloads[vid_id]['progress'] = min(99, int(count * block_size * 100 / total_size))
-            urllib.request.urlretrieve(url, local_path, reporthook)
+                    # Download = 0-85%, remux = 85-99%
+                    _aerial_downloads[vid_id]['progress'] = min(85, int(count * block_size * 85 / total_size))
+            urllib.request.urlretrieve(url, tmp_path, reporthook)
+
+            ffmpeg = _ffmpeg_path()
+            if ffmpeg:
+                # Remux QuickTime container → real MPEG-4, no re-encode
+                _aerial_downloads[vid_id]['progress'] = 90
+                import subprocess
+                result = subprocess.run(
+                    [ffmpeg, '-y', '-i', tmp_path, '-c', 'copy', '-movflags', '+faststart', local_path],
+                    capture_output=True, timeout=120
+                )
+                os.remove(tmp_path)
+                if result.returncode != 0:
+                    raise RuntimeError(f'ffmpeg remux failed: {result.stderr.decode()[-200:]}')
+                print(f'[aerials] downloaded+remuxed {vid_id} ({item["name"]})')
+            else:
+                # No ffmpeg — just rename, works on macOS/Safari at least
+                os.rename(tmp_path, local_path)
+                print(f'[aerials] downloaded {vid_id} ({item["name"]}) — ffmpeg not found, skipped remux')
+
             _aerial_downloads[vid_id] = {'status': 'ready', 'progress': 100}
-            print(f'[aerials] downloaded {vid_id} ({item["name"]})')
         except Exception as e:
             _aerial_downloads[vid_id] = {'status': 'error', 'progress': 0}
-            if os.path.exists(local_path):
-                os.remove(local_path)
+            for p in [local_path, tmp_path]:
+                if os.path.exists(p):
+                    os.remove(p)
             print(f'[aerials] download failed {vid_id}: {e}')
 
     threading.Thread(target=do_download, daemon=True).start()
@@ -445,7 +473,7 @@ def api_aerials_download():
 @app.route('/api/aerials/status')
 def api_aerials_status():
     vid_id = request.args.get('id', '').strip()
-    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mp4')
     if os.path.exists(local_path):
         status, progress = 'ready', 100
     elif vid_id in _aerial_downloads:
@@ -457,8 +485,52 @@ def api_aerials_status():
         'id': vid_id,
         'status': status,
         'progress': progress,
-        'local_url': f'/static/aerials/{vid_id}.mov' if status == 'ready' else None,
+        'local_url': f'/static/aerials/{vid_id}.mp4' if status == 'ready' else None,
     })
+
+
+@app.route('/api/aerials/remux_all', methods=['POST'])
+def api_aerials_remux_all():
+    """Remux all downloaded QuickTime .mp4 files to proper MPEG-4 containers."""
+    import shutil, subprocess
+    ffmpeg = next((p for p in ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/usr/bin/ffmpeg']
+                   if os.path.isfile(p)), shutil.which('ffmpeg'))
+    if not ffmpeg:
+        return jsonify({'status': 'error', 'message': 'ffmpeg not found — install with: brew install ffmpeg'}), 400
+
+    fixed, failed = [], []
+    for fname in os.listdir(AERIALS_DIR):
+        if not fname.endswith('.mp4'):
+            continue
+        fpath = os.path.join(AERIALS_DIR, fname)
+        # Check if it's actually a QuickTime container
+        with open(fpath, 'rb') as f:
+            header = f.read(12)
+        if b'ftyp' not in header and b'qt  ' not in header and b'moov' not in header:
+            # Quick check: read more
+            with open(fpath, 'rb') as f:
+                chunk = f.read(64)
+            if b'qt  ' not in chunk and b'ftyp' not in chunk:
+                continue  # skip, probably already fine or not a video
+        tmp = fpath + '.remux.mp4'
+        try:
+            result = subprocess.run(
+                [ffmpeg, '-y', '-i', fpath, '-c', 'copy', '-movflags', '+faststart', tmp],
+                capture_output=True, timeout=180
+            )
+            if result.returncode == 0:
+                os.replace(tmp, fpath)
+                fixed.append(fname)
+            else:
+                if os.path.exists(tmp): os.remove(tmp)
+                failed.append(fname)
+        except Exception as e:
+            if os.path.exists(tmp): os.remove(tmp)
+            failed.append(fname)
+            print(f'[aerials] remux failed {fname}: {e}')
+
+    print(f'[aerials] remux_all: fixed={fixed}, failed={failed}')
+    return jsonify({'status': 'ok', 'fixed': fixed, 'failed': failed})
 
 
 @app.route('/api/aerials/refresh', methods=['POST'])
@@ -504,7 +576,7 @@ def api_aerials_refresh():
 def api_aerials_delete():
     data = request.get_json(silent=True) or {}
     vid_id = (data.get('id') or request.form.get('id', '')).strip()
-    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mp4')
     if os.path.exists(local_path):
         os.remove(local_path)
     _aerial_downloads.pop(vid_id, None)
