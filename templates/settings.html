@@ -8,9 +8,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body style="background: {{ config.background }};">
+    {% if config.bg_video %}
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="{{ config.bg_video }}">
+    </video>
+    {% endif %}
     <header>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/settings" class="active">Settings</a>
+        <a href="/dashboard" class="header-logo-link" title="Dashboard">
+            <img src="{{ url_for('static', filename='Icons/favicon.png') }}" class="header-logo" alt="Dashboard">
+        </a>
+        {% if device %}<span class="header-device">{{ device.name }}</span>{% endif %}
     </header>
 
     <div class="settings-layout">
@@ -128,6 +135,30 @@
                         <button class="btn btn-primary" id="wp-apply" style="width:100%;">Apply Wallpaper</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- LIVE WALLPAPERS (AERIAL)                                      -->
+        <!-- ============================================================ -->
+
+        <div class="settings-section">
+            <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+                Live Wallpapers
+                <button class="btn btn-subtle" id="aerial-refresh-btn" style="font-size:11px;padding:4px 10px;">Refresh List</button>
+            </div>
+            <div class="settings-card" style="padding:0;">
+                <div style="padding:12px 14px 8px;display:flex;gap:8px;align-items:center;">
+                    <input type="text" class="settings-input" id="aerial-search" placeholder="Search 199 aerials..." style="margin-bottom:0;flex:1;">
+                </div>
+                <div id="aerial-gallery" style="max-height:320px;overflow-y:auto;overflow-x:hidden;">
+                    <div class="wallpaper-loading">Loading aerials...</div>
+                </div>
+                {% if config.bg_video %}
+                <div style="padding:8px 14px 12px;border-top:0.5px solid rgba(255,255,255,0.06);">
+                    <button class="btn btn-subtle" id="aerial-clear-btn" style="width:100%;">Remove Live Wallpaper</button>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -724,6 +755,11 @@
                   } else if (overlay) {
                       overlay.remove();
                   }
+                  // Clear any active aerial
+                  currentBgVideo = '';
+                  allAerials.forEach(function(a) { updateCard(a); });
+                  var clearBtn2 = document.getElementById('aerial-clear-btn');
+                  if (clearBtn2) clearBtn2.closest('.settings-input-group').remove();
                   toast('Wallpaper applied', 'ok');
               })
               .catch(function() { toast('Failed', 'err'); });
@@ -734,6 +770,221 @@
             renderGallery(!q ? allWallpapers : allWallpapers.filter(function(w) {
                 return w.name.toLowerCase().indexOf(q) !== -1;
             }));
+        });
+
+        // ============================================================
+        // Aerial (Live Wallpapers)
+        // ============================================================
+        var allAerials = [];
+        var aerialPollers = {}; // {id: intervalId}
+        var currentBgVideo = '{{ config.bg_video | default("") }}';
+
+        function aerialLocalUrl(id) { return '/static/aerials/' + id + '.mov'; }
+
+        function renderAerials(items) {
+            var g = document.getElementById('aerial-gallery');
+            if (!items.length) { g.innerHTML = '<div class="wallpaper-loading">No aerials found</div>'; return; }
+            var h = '<div class="aerial-grid">';
+            for (var i = 0; i < items.length; i++) {
+                var a = items[i];
+                h += aerialCardHtml(a);
+            }
+            h += '</div>';
+            g.innerHTML = h;
+            attachAerialHandlers();
+        }
+
+        function aerialCardHtml(a) {
+            var isActive = (currentBgVideo === aerialLocalUrl(a.id));
+            var h = '<div class="aerial-card' + (isActive ? ' is-active' : '') + '" id="acard-' + a.id + '">';
+            h += '<div class="aerial-card-name" title="' + a.name + '">' + a.name + '</div>';
+            h += '<div class="aerial-card-row">' + aerialCardControls(a) + '</div>';
+            h += '</div>';
+            return h;
+        }
+
+        function aerialCardControls(a) {
+            if (a.status === 'idle' || a.status === 'error') {
+                var badge = a.status === 'error'
+                    ? '<span class="aerial-badge aerial-badge-error">Error</span>'
+                    : '<span class="aerial-badge aerial-badge-idle">Not downloaded</span>';
+                return badge + '<button class="aerial-btn aerial-btn-download" data-id="' + a.id + '" data-action="download">Download</button>';
+            }
+            if (a.status === 'downloading') {
+                return '<span class="aerial-badge aerial-badge-active">Downloading</span>'
+                    + '<div class="aerial-progress"><div class="aerial-progress-fill" id="aprog-' + a.id + '" style="width:' + a.progress + '%"></div></div>'
+                    + '<span style="font-size:10px;color:rgba(255,255,255,0.4);flex-shrink:0;" id="apct-' + a.id + '">' + a.progress + '%</span>';
+            }
+            // ready
+            var isActive = (currentBgVideo === aerialLocalUrl(a.id));
+            var setBtn = isActive
+                ? '<span class="aerial-badge aerial-badge-active">Active</span>'
+                : '<button class="aerial-btn aerial-btn-set" data-id="' + a.id + '" data-action="set">Set</button>';
+            return '<span class="aerial-badge aerial-badge-ready">Ready</span>'
+                + setBtn
+                + '<button class="aerial-btn aerial-btn-delete" data-id="' + a.id + '" data-action="delete">&#x2715;</button>';
+        }
+
+        function attachAerialHandlers() {
+            document.querySelectorAll('[data-action]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.getAttribute('data-id');
+                    var action = this.getAttribute('data-action');
+                    if (action === 'download') aerialDownload(id);
+                    else if (action === 'set') aerialSet(id);
+                    else if (action === 'delete') aerialDelete(id);
+                });
+            });
+        }
+
+        function updateCard(a) {
+            var card = document.getElementById('acard-' + a.id);
+            if (!card) return;
+            var isActive = (currentBgVideo === aerialLocalUrl(a.id));
+            card.className = 'aerial-card' + (isActive ? ' is-active' : '');
+            var row = card.querySelector('.aerial-card-row');
+            if (row) { row.innerHTML = aerialCardControls(a); attachAerialHandlers(); }
+        }
+
+        function aerialDownload(id) {
+            fetch('/api/aerials/download', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            }).then(function(r) { return r.json(); }).then(function(d) {
+                var idx = allAerials.findIndex(function(a){return a.id===id;});
+                if (idx >= 0) { allAerials[idx].status = d.status; allAerials[idx].progress = 0; updateCard(allAerials[idx]); }
+                if (d.status === 'downloading') startPolling(id);
+            });
+        }
+
+        function startPolling(id) {
+            if (aerialPollers[id]) return;
+            aerialPollers[id] = setInterval(function() {
+                fetch('/api/aerials/status?id=' + id)
+                    .then(function(r){return r.json();})
+                    .then(function(d) {
+                        var idx = allAerials.findIndex(function(a){return a.id===id;});
+                        if (idx >= 0) { allAerials[idx].status = d.status; allAerials[idx].progress = d.progress; }
+                        // Update progress bar inline if card exists
+                        var prog = document.getElementById('aprog-' + id);
+                        var pct = document.getElementById('apct-' + id);
+                        if (prog) prog.style.width = d.progress + '%';
+                        if (pct) pct.textContent = d.progress + '%';
+                        if (d.status !== 'downloading') {
+                            clearInterval(aerialPollers[id]);
+                            delete aerialPollers[id];
+                            if (idx >= 0) updateCard(allAerials[idx]);
+                            if (d.status === 'ready') toast(allAerials[idx] ? allAerials[idx].name + ' ready' : 'Video ready', 'ok');
+                        }
+                    });
+            }, 1500);
+        }
+
+        function aerialSet(id) {
+            var localUrl = aerialLocalUrl(id);
+            var data = new FormData();
+            data.set('action', 'update_background');
+            data.set('bg_video', localUrl);
+            fetch('/settings', {method:'POST', body:data, headers:{'X-Requested-With':'fetch','Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(r) {
+                    if (r.status !== 'ok') { toast('Failed', 'err'); return; }
+                    currentBgVideo = localUrl;
+                    allAerials.forEach(function(a) { updateCard(a); });
+                    // Show remove button
+                    var clearDiv = document.querySelector('#aerial-clear-btn');
+                    if (!clearDiv) {
+                        var card = document.querySelector('.settings-card:has(#aerial-gallery)');
+                        if (card) {
+                            var d2 = document.createElement('div');
+                            d2.className = 'settings-input-group';
+                            d2.style.cssText = 'border-top:0.5px solid rgba(255,255,255,0.06);padding-top:10px;';
+                            d2.innerHTML = '<button class="btn btn-subtle" id="aerial-clear-btn" style="width:100%;">Remove Live Wallpaper</button>';
+                            card.appendChild(d2);
+                            d2.querySelector('button').addEventListener('click', aerialClear);
+                        }
+                    }
+                    toast('Live wallpaper set', 'ok');
+                });
+        }
+
+        function aerialClear() {
+            var data = new FormData();
+            data.set('action', 'update_background');
+            data.set('bg_video', '');
+            data.set('background_css', '#0a0a0a');
+            fetch('/settings', {method:'POST', body:data, headers:{'X-Requested-With':'fetch','Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(r) {
+                    if (r.status !== 'ok') { toast('Failed', 'err'); return; }
+                    currentBgVideo = '';
+                    allAerials.forEach(function(a) { updateCard(a); });
+                    var clearBtn = document.getElementById('aerial-clear-btn');
+                    if (clearBtn) clearBtn.closest('.settings-input-group').remove();
+                    toast('Live wallpaper removed', 'ok');
+                });
+        }
+
+        function aerialDelete(id) {
+            if (!confirm('Delete this downloaded video?')) return;
+            if (currentBgVideo === aerialLocalUrl(id)) aerialClear();
+            fetch('/api/aerials/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            }).then(function() {
+                var idx = allAerials.findIndex(function(a){return a.id===id;});
+                if (idx >= 0) { allAerials[idx].status = 'idle'; allAerials[idx].progress = 0; updateCard(allAerials[idx]); }
+            });
+        }
+
+        // Load aerials
+        fetch('/api/aerials')
+            .then(function(r){return r.json();})
+            .then(function(data) {
+                allAerials = data;
+                renderAerials(data);
+                // Resume polling for any in-progress downloads
+                data.forEach(function(a) { if (a.status === 'downloading') startPolling(a.id); });
+            })
+            .catch(function() { document.getElementById('aerial-gallery').innerHTML = '<div class="wallpaper-loading">Could not load</div>'; });
+
+        document.getElementById('aerial-search').addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            renderAerials(!q ? allAerials : allAerials.filter(function(a) {
+                return a.name.toLowerCase().indexOf(q) !== -1;
+            }));
+        });
+
+        var clearBtn = document.getElementById('aerial-clear-btn');
+        if (clearBtn) clearBtn.addEventListener('click', aerialClear);
+
+        document.getElementById('aerial-refresh-btn').addEventListener('click', function() {
+            var btn = this;
+            btn.textContent = 'Refreshing...';
+            btn.disabled = true;
+            fetch('/api/aerials/refresh', {method: 'POST', headers: {'X-Requested-With': 'fetch'}})
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    btn.textContent = 'Refresh List';
+                    btn.disabled = false;
+                    if (d.status === 'ok') {
+                        toast('Catalog updated (' + d.count + ' videos)', 'ok');
+                        return fetch('/api/aerials').then(function(r) { return r.json(); });
+                    } else {
+                        toast('Refresh failed', 'err');
+                    }
+                })
+                .then(function(data) {
+                    if (!data) return;
+                    allAerials = data;
+                    var q = document.getElementById('aerial-search').value.toLowerCase().trim();
+                    renderAerials(!q ? allAerials : allAerials.filter(function(a) {
+                        return a.name.toLowerCase().indexOf(q) !== -1;
+                    }));
+                })
+                .catch(function() { btn.textContent = 'Refresh List'; btn.disabled = false; toast('Refresh failed', 'err'); });
         });
 
         // ============================================================

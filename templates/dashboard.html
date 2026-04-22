@@ -10,6 +10,11 @@
     <link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-extra.min.css" rel="stylesheet"/>
 </head>
 <body style="background: {{ config.background }};">
+    {% if config.bg_video %}
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="{{ config.bg_video }}">
+    </video>
+    {% endif %}
     {% if config.bg_blur or config.bg_dim %}
     <div class="bg-overlay" style="
         {% if config.bg_blur %}backdrop-filter: blur({{ config.bg_blur }}px); -webkit-backdrop-filter: blur({{ config.bg_blur }}px);{% endif %}
@@ -17,9 +22,12 @@
     "></div>
     {% endif %}
     <header>
-        <a href="/dashboard" class="active">Dashboard</a>
-        <a href="/settings">Settings</a>
-        {% if device %}<a href="/setup" style="margin-left:auto;opacity:0.4;font-size:12px;">{{ device.name }}</a>{% endif %}
+        <img src="{{ url_for('static', filename='Icons/favicon.png') }}" class="header-logo" alt="Dashboard">
+        {% if device %}<span class="header-device">{{ device.name }}</span>{% endif %}
+        <div class="header-spacer"></div>
+        <a href="/settings" class="header-icon-btn" title="Settings">
+            <img src="{{ url_for('static', filename='Icons/settings.svg') }}" alt="Settings">
+        </a>
     </header>
 
     <div class="grid-stack" id="dashboard-grid">

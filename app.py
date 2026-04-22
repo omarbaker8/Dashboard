@@ -2,6 +2,7 @@ import os
 import json
 import re
 import time
+import threading
 import urllib.request
 import urllib.parse
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, make_response
@@ -26,8 +27,23 @@ WALLPAPERS_DIR = os.path.join('static', 'wallpapers')
 THUMBS_DIR = os.path.join(WALLPAPERS_DIR, '.thumbs')
 THUMB_SIZE = (280, 175)
 ALLOWED_IMAGE_EXT = ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg')
+AERIALS_DIR = os.path.join('static', 'aerials')
 
 os.makedirs(WIDGETS_DIR, exist_ok=True)
+os.makedirs(AERIALS_DIR, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Aerial catalog + download state
+# ---------------------------------------------------------------------------
+_AERIAL_CATALOG = []
+_aerial_downloads = {}  # {id: {'status': 'downloading'|'ready'|'error', 'progress': 0-100}}
+
+try:
+    with open('aerial_catalog.json') as _f:
+        _AERIAL_CATALOG = json.load(_f)
+    print(f'[aerials] loaded {len(_AERIAL_CATALOG)} videos')
+except Exception as _e:
+    print(f'[aerials] catalog load failed: {_e}')
 
 
 # ---------------------------------------------------------------------------
@@ -271,10 +287,17 @@ def settings():
             bg_css = request.form.get('background_css', '').strip()
             if bg_css:
                 config['background'] = bg_css
+                config['bg_video'] = ''  # clear video when static wallpaper applied
             bg_blur = request.form.get('bg_blur', '0')
             bg_dim = request.form.get('bg_dim', '0')
             config['bg_blur'] = int(bg_blur) if bg_blur.isdigit() else 0
             config['bg_dim'] = int(bg_dim) if bg_dim.isdigit() else 0
+            # Live wallpaper (aerial video)
+            bg_video = request.form.get('bg_video', None)
+            if bg_video is not None:
+                config['bg_video'] = bg_video.strip()
+                if config['bg_video']:
+                    config['background'] = 'transparent'
             save_device_config(device['id'], config)
             if is_ajax:
                 return jsonify({"status": "ok", "action": action, "config": config})
@@ -352,6 +375,140 @@ def api_wallpapers():
                 'thumb': f'/api/thumb/{f}'
             })
     return jsonify(files)
+
+
+# ---------------------------------------------------------------------------
+# API: Aerial (Live Wallpapers)
+# ---------------------------------------------------------------------------
+
+@app.route('/api/aerials')
+def api_aerials():
+    result = []
+    for item in _AERIAL_CATALOG:
+        vid_id = item['id']
+        local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+        if os.path.exists(local_path):
+            status = 'ready'
+            progress = 100
+        elif vid_id in _aerial_downloads:
+            status = _aerial_downloads[vid_id]['status']
+            progress = _aerial_downloads[vid_id]['progress']
+        else:
+            status = 'idle'
+            progress = 0
+        result.append({
+            'id': vid_id,
+            'name': item['name'],
+            'status': status,
+            'progress': progress,
+        })
+    return jsonify(result)
+
+
+@app.route('/api/aerials/download', methods=['POST'])
+def api_aerials_download():
+    data = request.get_json(silent=True) or {}
+    vid_id = (data.get('id') or request.form.get('id', '')).strip()
+    item = next((a for a in _AERIAL_CATALOG if a['id'] == vid_id), None)
+    if not item:
+        return jsonify({'error': 'not found'}), 404
+
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    if os.path.exists(local_path):
+        _aerial_downloads[vid_id] = {'status': 'ready', 'progress': 100}
+        return jsonify({'status': 'ready'})
+
+    if _aerial_downloads.get(vid_id, {}).get('status') == 'downloading':
+        return jsonify({'status': 'downloading'})
+
+    url = item.get('url_1080_h264') or item.get('url_1080_sdr', '')
+    _aerial_downloads[vid_id] = {'status': 'downloading', 'progress': 0}
+
+    def do_download():
+        try:
+            def reporthook(count, block_size, total_size):
+                if total_size > 0:
+                    _aerial_downloads[vid_id]['progress'] = min(99, int(count * block_size * 100 / total_size))
+            urllib.request.urlretrieve(url, local_path, reporthook)
+            _aerial_downloads[vid_id] = {'status': 'ready', 'progress': 100}
+            print(f'[aerials] downloaded {vid_id} ({item["name"]})')
+        except Exception as e:
+            _aerial_downloads[vid_id] = {'status': 'error', 'progress': 0}
+            if os.path.exists(local_path):
+                os.remove(local_path)
+            print(f'[aerials] download failed {vid_id}: {e}')
+
+    threading.Thread(target=do_download, daemon=True).start()
+    return jsonify({'status': 'downloading'})
+
+
+@app.route('/api/aerials/status')
+def api_aerials_status():
+    vid_id = request.args.get('id', '').strip()
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    if os.path.exists(local_path):
+        status, progress = 'ready', 100
+    elif vid_id in _aerial_downloads:
+        status = _aerial_downloads[vid_id]['status']
+        progress = _aerial_downloads[vid_id]['progress']
+    else:
+        status, progress = 'idle', 0
+    return jsonify({
+        'id': vid_id,
+        'status': status,
+        'progress': progress,
+        'local_url': f'/static/aerials/{vid_id}.mov' if status == 'ready' else None,
+    })
+
+
+@app.route('/api/aerials/refresh', methods=['POST'])
+def api_aerials_refresh():
+    global _AERIAL_CATALOG
+    try:
+        def fetch_json(url):
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return json.loads(r.read())
+
+        videos_data = fetch_json(
+            'https://raw.githubusercontent.com/aabytt/custom-screensaver-aerial/refs/heads/main/assets/videos.json'
+        )
+        locale_data = fetch_json(
+            'https://raw.githubusercontent.com/aabytt/custom-screensaver-aerial/refs/heads/main/assets/locales/en-GB.json'
+        )
+
+        catalog = []
+        for asset in videos_data.get('assets', []):
+            raw_key = asset.get('localizedNameKey', '')
+            lookup_key = raw_key.replace('_NAME', '')
+            name = (locale_data.get(raw_key) or locale_data.get(lookup_key)
+                    or raw_key.replace('_NAME', '').replace('_', ' ').title())
+            catalog.append({
+                'id': asset['id'],
+                'name': name,
+                'url_1080_h264': asset.get('url-1080-H264', ''),
+                'url_1080_sdr':  asset.get('url-1080-SDR', ''),
+            })
+
+        with open('aerial_catalog.json', 'w') as f:
+            json.dump(catalog, f, indent=2)
+        _AERIAL_CATALOG = catalog
+        print(f'[aerials] refreshed catalog: {len(catalog)} videos')
+        return jsonify({'status': 'ok', 'count': len(catalog)})
+    except Exception as e:
+        print(f'[aerials] refresh failed: {e}')
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/aerials/delete', methods=['POST'])
+def api_aerials_delete():
+    data = request.get_json(silent=True) or {}
+    vid_id = (data.get('id') or request.form.get('id', '')).strip()
+    local_path = os.path.join(AERIALS_DIR, vid_id + '.mov')
+    if os.path.exists(local_path):
+        os.remove(local_path)
+    _aerial_downloads.pop(vid_id, None)
+    return jsonify({'status': 'ok'})
 
 
 @app.route('/api/thumb/<path:filename>')
