@@ -9,6 +9,10 @@
     box-sizing: border-box;
 }
 
+html {
+    background: #0a0a0a;
+}
+
 body {
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;

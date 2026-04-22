@@ -755,11 +755,12 @@
                   } else if (overlay) {
                       overlay.remove();
                   }
-                  // Clear any active aerial
+                  // Clear any active aerial instantly
+                  applyVideoDOM('');
                   currentBgVideo = '';
                   allAerials.forEach(function(a) { updateCard(a); });
                   var clearBtn2 = document.getElementById('aerial-clear-btn');
-                  if (clearBtn2) clearBtn2.closest('.settings-input-group').remove();
+                  if (clearBtn2) clearBtn2.closest('div').remove();
                   toast('Wallpaper applied', 'ok');
               })
               .catch(function() { toast('Failed', 'err'); });
@@ -881,49 +882,75 @@
             }, 1500);
         }
 
+        function applyVideoDOM(localUrl) {
+            var existing = document.querySelector('.bg-video');
+            if (localUrl) {
+                if (existing) {
+                    existing.querySelector('source').src = localUrl;
+                    existing.load();
+                    existing.play();
+                } else {
+                    var vid = document.createElement('video');
+                    vid.className = 'bg-video';
+                    vid.autoplay = true;
+                    vid.muted = true;
+                    vid.loop = true;
+                    vid.setAttribute('playsinline', '');
+                    var src = document.createElement('source');
+                    src.src = localUrl;
+                    vid.appendChild(src);
+                    document.body.insertBefore(vid, document.body.firstChild);
+                }
+                document.body.style.background = 'transparent';
+            } else {
+                if (existing) existing.remove();
+                document.body.style.background = '#0a0a0a';
+            }
+        }
+
         function aerialSet(id) {
             var localUrl = aerialLocalUrl(id);
+            // Apply instantly to DOM
+            applyVideoDOM(localUrl);
+            currentBgVideo = localUrl;
+            allAerials.forEach(function(a) { updateCard(a); });
+            // Show remove button if not present
+            if (!document.getElementById('aerial-clear-btn')) {
+                var gallery = document.getElementById('aerial-gallery');
+                if (gallery && gallery.parentNode) {
+                    var d2 = document.createElement('div');
+                    d2.style.cssText = 'padding:8px 14px 12px;border-top:0.5px solid rgba(255,255,255,0.06);';
+                    d2.innerHTML = '<button class="btn btn-subtle" id="aerial-clear-btn" style="width:100%;">Remove Live Wallpaper</button>';
+                    gallery.parentNode.appendChild(d2);
+                    d2.querySelector('button').addEventListener('click', aerialClear);
+                }
+            }
+            // Persist to server in background
             var data = new FormData();
             data.set('action', 'update_background');
             data.set('bg_video', localUrl);
             fetch('/settings', {method:'POST', body:data, headers:{'X-Requested-With':'fetch','Accept':'application/json'}})
                 .then(function(r){return r.json();})
-                .then(function(r) {
-                    if (r.status !== 'ok') { toast('Failed', 'err'); return; }
-                    currentBgVideo = localUrl;
-                    allAerials.forEach(function(a) { updateCard(a); });
-                    // Show remove button
-                    var clearDiv = document.querySelector('#aerial-clear-btn');
-                    if (!clearDiv) {
-                        var card = document.querySelector('.settings-card:has(#aerial-gallery)');
-                        if (card) {
-                            var d2 = document.createElement('div');
-                            d2.className = 'settings-input-group';
-                            d2.style.cssText = 'border-top:0.5px solid rgba(255,255,255,0.06);padding-top:10px;';
-                            d2.innerHTML = '<button class="btn btn-subtle" id="aerial-clear-btn" style="width:100%;">Remove Live Wallpaper</button>';
-                            card.appendChild(d2);
-                            d2.querySelector('button').addEventListener('click', aerialClear);
-                        }
-                    }
-                    toast('Live wallpaper set', 'ok');
-                });
+                .then(function(r) { toast(r.status === 'ok' ? 'Live wallpaper set' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
+                .catch(function() { toast('Failed', 'err'); });
         }
 
         function aerialClear() {
+            // Apply instantly to DOM
+            applyVideoDOM('');
+            currentBgVideo = '';
+            allAerials.forEach(function(a) { updateCard(a); });
+            var clearBtn = document.getElementById('aerial-clear-btn');
+            if (clearBtn) clearBtn.closest('div').remove();
+            // Persist to server in background
             var data = new FormData();
             data.set('action', 'update_background');
             data.set('bg_video', '');
             data.set('background_css', '#0a0a0a');
             fetch('/settings', {method:'POST', body:data, headers:{'X-Requested-With':'fetch','Accept':'application/json'}})
                 .then(function(r){return r.json();})
-                .then(function(r) {
-                    if (r.status !== 'ok') { toast('Failed', 'err'); return; }
-                    currentBgVideo = '';
-                    allAerials.forEach(function(a) { updateCard(a); });
-                    var clearBtn = document.getElementById('aerial-clear-btn');
-                    if (clearBtn) clearBtn.closest('.settings-input-group').remove();
-                    toast('Live wallpaper removed', 'ok');
-                });
+                .then(function(r) { toast(r.status === 'ok' ? 'Live wallpaper removed' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
+                .catch(function() { toast('Failed', 'err'); });
         }
 
         function aerialDelete(id) {
