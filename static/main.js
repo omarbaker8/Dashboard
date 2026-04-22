@@ -27,11 +27,17 @@
         }
     }, '#dashboard-grid');
 
-    // Recalculate on window resize so cells stay square
-    window.addEventListener('resize', function () {
-        var w = gridEl.offsetWidth / 12;
-        grid.cellHeight(Math.round(w));
+    // Recalculate cell height whenever the grid element itself changes size.
+    // ResizeObserver catches DevTools open/close that window 'resize' misses.
+    var _rhTimer = null;
+    var _ro = new ResizeObserver(function () {
+        clearTimeout(_rhTimer);
+        _rhTimer = setTimeout(function () {
+            var w = gridEl.offsetWidth / 18;
+            grid.cellHeight(Math.round(w));
+        }, 60);
     });
+    _ro.observe(gridEl);
 
     // --- Aspect Ratio Lock (1:1) ---
     var prevSizes = {};
