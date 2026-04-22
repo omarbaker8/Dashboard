@@ -256,6 +256,9 @@ def settings():
                                 w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
                             except ValueError:
                                 pass
+                        _lo = request.form.get('live_only')
+                        if _lo is not None:
+                            w['live_only'] = (_lo == 'true')
                         _kc = request.form.get('kagi_categories')
                         if _kc is not None:
                             cats = [c.strip() for c in _kc.split(',') if c.strip()]
@@ -754,10 +757,28 @@ _AP_LIVE_RE = re.compile(r'apnews\.com(/live/[a-z0-9-]+)')
 # AI/tech articles come back as "Business", so we use the /hub/artificial-intelligence
 # path and bucket by source hub, not category.
 _AP_HUB_SECTIONS = [
-    ('top-news',   '/hub/apf-topnews'),
-    ('technology', '/hub/artificial-intelligence'),
-    ('science',    '/hub/space'),
+    ('top-news',     '/hub/apf-topnews'),
+    ('technology',   '/hub/artificial-intelligence'),
+    ('science',      '/hub/space'),
+    ('politics',     '/hub/politics'),
+    ('sports',       '/hub/sports'),
+    ('health',       '/hub/health'),
+    ('entertainment','/hub/entertainment'),
+    ('business',     '/hub/business'),
+    ('us-news',      '/hub/us-news'),
 ]
+
+# Category string → bucket key (for top-news hub routing)
+_AP_CAT_MAP = {
+    'World News':    'world',
+    'U.S. News':     'us-news',
+    'Politics':      'politics',
+    'Sports':        'sports',
+    'Science':       'science',
+    'Health':        'health',
+    'Entertainment': 'entertainment',
+    'Business':      'business',
+}
 
 
 def _ap_graphql(query, variables):
@@ -804,9 +825,11 @@ def fetch_ap_news():
         return _ap_cache['groups']
 
     seen_urls = set()
-    buckets = {'live': [], 'world': [], 'technology': [], 'science': [], 'top': []}
+    all_keys = ['live', 'world', 'technology', 'science', 'politics',
+                'sports', 'health', 'entertainment', 'business', 'us-news', 'top']
+    buckets = {k: [] for k in all_keys}
 
-    # 1. Live blogs via homepage scrape (the source the original script uses)
+    # 1. Live blogs via homepage scrape
     try:
         for lb in _ap_fetch_live_blogs():
             url = lb['url']
@@ -817,9 +840,6 @@ def fetch_ap_news():
         print(f'[ap_news] live blogs failed: {e}')
 
     # 2. Hub sections
-    # top-news: route by category ("World News" → world, liveEvent → live, rest → top)
-    # technology hub (/hub/artificial-intelligence): all articles → technology (no "Technology" category exists)
-    # science hub (/hub/space): all articles → science (category is "Science")
     for key, path in _AP_HUB_SECTIONS:
         try:
             raw = _ap_fetch_hub(path)
@@ -836,26 +856,31 @@ def fetch_ap_news():
             if item.get('liveEvent'):
                 a['isLive'] = True
                 buckets['live'].append(a)
-            elif key == 'technology':
-                buckets['technology'].append(a)
-            elif key == 'science':
-                buckets['science'].append(a)
-            elif cat == 'World News':
-                buckets['world'].append(a)
+            elif key == 'top-news':
+                # Route top-news articles by their category string
+                bucket = _AP_CAT_MAP.get(cat, 'top')
+                buckets[bucket].append(a)
             else:
-                buckets['top'].append(a)
+                # Dedicated hub — route directly to its bucket
+                buckets[key].append(a)
 
+    _AP_GROUP_ORDER = [
+        ('live',          'Live',          4),
+        ('world',         'World News',    4),
+        ('us-news',       'U.S. News',     3),
+        ('politics',      'Politics',      3),
+        ('technology',    'Technology',    3),
+        ('science',       'Science',       3),
+        ('business',      'Business',      3),
+        ('health',        'Health',        3),
+        ('sports',        'Sports',        3),
+        ('entertainment', 'Entertainment', 3),
+        ('top',           'Top Stories',   4),
+    ]
     groups = []
-    if buckets['live']:
-        groups.append({'label': 'Live',        'items': buckets['live'][:4]})
-    if buckets['world']:
-        groups.append({'label': 'World News',  'items': buckets['world'][:4]})
-    if buckets['technology']:
-        groups.append({'label': 'Technology',  'items': buckets['technology'][:3]})
-    if buckets['science']:
-        groups.append({'label': 'Science',     'items': buckets['science'][:3]})
-    if buckets['top']:
-        groups.append({'label': 'Top Stories', 'items': buckets['top'][:4]})
+    for key, label, limit in _AP_GROUP_ORDER:
+        if buckets[key]:
+            groups.append({'label': label, 'items': buckets[key][:limit]})
 
     if groups:
         _ap_cache['groups'] = groups

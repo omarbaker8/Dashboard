@@ -423,6 +423,16 @@
                     </div>
                     {% endif %}
 
+                    <!-- Live only toggle (BBC + AP News) -->
+                    {% if widget.id in ['widget-apple-bbc', 'widget-ap-news'] %}
+                    <div class="control-section">
+                        <label class="settings-input-label" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                            Live news only
+                            <input type="checkbox" id="live-only-{{ loop.index0 }}" {% if widget.get('live_only') %}checked{% endif %} style="width:16px;height:16px;accent-color:#E5072F;cursor:pointer;">
+                        </label>
+                    </div>
+                    {% endif %}
+
                     <!-- Mondrian settings -->
                     {% if widget.id == 'widget-mondrian' %}
                     <div class="control-section">
@@ -516,6 +526,7 @@
                         <input type="hidden" name="stroke" id="mon-stroke-out-{{ loop.index0 }}" value="{{ widget.get('stroke', 2) }}">
                         <input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">
                         <input type="hidden" name="kagi_categories" id="kagi-cats-out-{{ loop.index0 }}" value="{{ widget.get('categories', ['tech','ai','science']) | join(',') }}">
+                        <input type="hidden" name="live_only" id="live-only-out-{{ loop.index0 }}" value="{{ 'true' if widget.get('live_only') else 'false' }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -888,7 +899,7 @@
                 if (existing) {
                     existing.querySelector('source').src = localUrl;
                     existing.load();
-                    existing.play();
+                    existing.play().catch(function(){});
                 } else {
                     var vid = document.createElement('video');
                     vid.className = 'bg-video';
@@ -896,6 +907,7 @@
                     vid.muted = true;
                     vid.loop = true;
                     vid.setAttribute('playsinline', '');
+                    vid.addEventListener('ended', function() { vid.currentTime = 0; vid.play().catch(function(){}); });
                     var src = document.createElement('source');
                     src.src = localUrl;
                     vid.appendChild(src);
@@ -1269,6 +1281,8 @@
                 var checked = Array.from(kagiCatsBox.querySelectorAll('input[type=checkbox]:checked')).map(function(cb){return cb.value;});
                 document.getElementById('kagi-cats-out-' + idx).value = checked.join(',');
             }
+            var liveOnlyCb = document.getElementById('live-only-' + idx);
+            if (liveOnlyCb) document.getElementById('live-only-out-' + idx).value = liveOnlyCb.checked ? 'true' : 'false';
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });

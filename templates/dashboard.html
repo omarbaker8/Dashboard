@@ -11,9 +11,16 @@
 </head>
 <body style="background: {{ config.background }};">
     {% if config.bg_video %}
-    <video class="bg-video" autoplay muted loop playsinline>
+    <video class="bg-video" id="bg-video-el" autoplay muted loop playsinline>
         <source src="{{ config.bg_video }}">
     </video>
+    <script>
+    (function(){
+        var v = document.getElementById('bg-video-el');
+        if (!v) return;
+        v.addEventListener('ended', function() { v.currentTime = 0; v.play(); });
+    })();
+    </script>
     {% endif %}
     {% if config.bg_blur or config.bg_dim %}
     <div class="bg-overlay" style="
@@ -23,7 +30,7 @@
     {% endif %}
     <header>
         <img src="{{ url_for('static', filename='Icons/favicon.png') }}" class="header-logo" alt="Dashboard">
-        {% if device %}<span class="header-device">{{ device.name }}</span>{% endif %}
+        {% if device %}<a href="/setup" class="header-device">{{ device.name }}</a>{% endif %}
         <div class="header-spacer"></div>
         <a href="/settings" class="header-icon-btn" title="Settings">
             <img src="{{ url_for('static', filename='Icons/settings.svg') }}" alt="Settings">
@@ -52,7 +59,8 @@
                      {% if widget.levels is defined %}data-levels="{{ widget.levels }}"{% endif %}
                      {% if widget.stroke is defined %}data-stroke="{{ widget.stroke }}"{% endif %}
                      {% if widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}
-                     {% if widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}>
+                     {% if widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}
+                     {% if widget.live_only is defined %}data-live-only="{{ 'true' if widget.live_only else 'false' }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>
