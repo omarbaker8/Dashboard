@@ -397,6 +397,7 @@
                         'widget-google-calendar':       900,
                         'widget-apple-bbc':             900,
                         'widget-ap-news':               900,
+                        'widget-ap-card':               300,
                         'widget-kagi-news':             1800,
                         'widget-google-wind':           900,
                         'widget-google-weather-alerts': 900,
@@ -430,6 +431,28 @@
                             Live news only
                             <input type="checkbox" id="live-only-{{ loop.index0 }}" {% if widget.get('live_only') %}checked{% endif %} style="width:16px;height:16px;accent-color:#E5072F;cursor:pointer;">
                         </label>
+                    </div>
+                    {% endif %}
+
+                    <!-- Session duration (AP News + AP Card) -->
+                    {% if widget.id in ['widget-ap-news', 'widget-ap-card'] %}
+                    {% set _si = widget.get('session_interval', 28800) %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Session Duration
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">stories accumulate, then reset</span>
+                        </label>
+                        <select class="settings-native-select" id="session-{{ loop.index0 }}">
+                            <option value="60"    {% if _si == 60    %}selected{% endif %}>1 minute</option>
+                            <option value="300"   {% if _si == 300   %}selected{% endif %}>5 minutes</option>
+                            <option value="900"   {% if _si == 900   %}selected{% endif %}>15 minutes</option>
+                            <option value="1800"  {% if _si == 1800  %}selected{% endif %}>30 minutes</option>
+                            <option value="3600"  {% if _si == 3600  %}selected{% endif %}>1 hour</option>
+                            <option value="7200"  {% if _si == 7200  %}selected{% endif %}>2 hours</option>
+                            <option value="14400" {% if _si == 14400 %}selected{% endif %}>4 hours</option>
+                            <option value="28800" {% if _si == 28800 %}selected{% endif %}>8 hours</option>
+                            <option value="43200" {% if _si == 43200 %}selected{% endif %}>12 hours</option>
+                            <option value="86400" {% if _si == 86400 %}selected{% endif %}>24 hours</option>
+                        </select>
                     </div>
                     {% endif %}
 
@@ -527,6 +550,7 @@
                         <input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">
                         <input type="hidden" name="kagi_categories" id="kagi-cats-out-{{ loop.index0 }}" value="{{ widget.get('categories', ['tech','ai','science']) | join(',') }}">
                         <input type="hidden" name="live_only" id="live-only-out-{{ loop.index0 }}" value="{{ 'true' if widget.get('live_only') else 'false' }}">
+                        <input type="hidden" name="session_interval" id="session-out-{{ loop.index0 }}" value="{{ widget.get('session_interval', 28800) }}">
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -1283,6 +1307,8 @@
             }
             var liveOnlyCb = document.getElementById('live-only-' + idx);
             if (liveOnlyCb) document.getElementById('live-only-out-' + idx).value = liveOnlyCb.checked ? 'true' : 'false';
+            var sessionSel = document.getElementById('session-' + idx);
+            if (sessionSel) document.getElementById('session-out-' + idx).value = sessionSel.value;
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });

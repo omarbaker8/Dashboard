@@ -259,6 +259,12 @@ def settings():
                                 w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
                             except ValueError:
                                 pass
+                        _si = request.form.get('session_interval')
+                        if _si is not None:
+                            try:
+                                w['session_interval'] = max(60, min(86400, int(_si)))
+                            except ValueError:
+                                pass
                         _lo = request.form.get('live_only')
                         if _lo is not None:
                             w['live_only'] = (_lo == 'true')
