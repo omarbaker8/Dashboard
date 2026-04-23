@@ -5,6 +5,9 @@ import time
 import threading
 import urllib.request
 import urllib.parse
+import requests
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, make_response
 
 # Load .env if present
@@ -891,6 +894,81 @@ def fetch_ap_news():
 @app.route('/api/ap_news')
 def api_ap_news():
     return jsonify(fetch_ap_news())
+
+
+# ---------------------------------------------------------------------------
+# API: AP Cards — top stories with hero images (scraped) for card-style widget
+# ---------------------------------------------------------------------------
+
+_AP_SCRAPE_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+}
+_ap_cards_cache = {'ts': 0, 'items': []}
+
+
+def _ap_fetch_article(url):
+    """Fetch a single AP article and return (image, category, headline)."""
+    try:
+        r = requests.get(url, headers=_AP_SCRAPE_HEADERS, timeout=6)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        og_img = soup.select_one('meta[property="og:image"]')
+        image = og_img.get('content', '') if og_img else ''
+        sec = soup.select_one('meta[property="article:section"]')
+        category = sec.get('content', '') if sec else ''
+        h1 = soup.find('h1')
+        headline = h1.get_text(strip=True) if h1 else ''
+        return image, category, headline
+    except Exception:
+        return '', '', ''
+
+
+def fetch_ap_cards():
+    now = time.time()
+    if _ap_cards_cache['items'] and (now - _ap_cards_cache['ts']) < 300:
+        return _ap_cards_cache['items']
+
+    # Step 1: scrape AP homepage for article list
+    try:
+        r = requests.get('https://apnews.com/', headers=_AP_SCRAPE_HEADERS, timeout=8)
+        soup = BeautifulSoup(r.text, 'html.parser')
+    except Exception as e:
+        print(f'[ap_cards] homepage failed: {e}')
+        return _ap_cards_cache['items']
+
+    candidates = []
+    for item in soup.select('bsp-scroll-shade.PageList-items .PageList-items-item'):
+        url = item.get('data-page-url', '')
+        title_el = item.select_one('.PagePromoContentIcons-text')
+        title = title_el.get_text(strip=True) if title_el else ''
+        if not (title and url):
+            continue
+        is_live = bool(item.select_one('.PageListTrending-LiveTag'))
+        candidates.append({'title': title, 'url': url, 'isLive': is_live, 'image': '', 'category': ''})
+        if len(candidates) >= 8:
+            break
+
+    if not candidates:
+        return _ap_cards_cache['items']
+
+    # Step 2: fetch article pages in parallel for og:image + category
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        future_map = {executor.submit(_ap_fetch_article, c['url']): i for i, c in enumerate(candidates)}
+        for future in as_completed(future_map):
+            i = future_map[future]
+            image, category, headline = future.result()
+            candidates[i]['image'] = image
+            candidates[i]['category'] = category
+            if headline:
+                candidates[i]['headline'] = headline
+
+    _ap_cards_cache['items'] = candidates
+    _ap_cards_cache['ts'] = now
+    return candidates
+
+
+@app.route('/api/ap_cards')
+def api_ap_cards():
+    return jsonify(fetch_ap_cards())
 
 
 # ---------------------------------------------------------------------------
