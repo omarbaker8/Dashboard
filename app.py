@@ -2,7 +2,9 @@ import os
 import json
 import re
 import time
+import calendar
 import threading
+from datetime import datetime
 import urllib.request
 import urllib.parse
 import requests
@@ -745,10 +747,19 @@ _AP_QUERY_HUB = (
     'main{__typename'
     '...on ColumnContainer{columns{__typename'
     '...on PageListModule{items{__typename'
-    '...on PagePromo{title url category liveEvent}'
+    '...on PagePromo{title url category liveEvent publishDate}'
     '}}}}}}'
     '}'
 )
+
+
+def _parse_ap_date(s):
+    """Parse AP publishDate string (UTC) → Unix timestamp seconds."""
+    try:
+        dt = datetime.strptime(s.strip(), '%B %d, %Y %I:%M %p')
+        return int(calendar.timegm(dt.timetuple()))
+    except Exception:
+        return None
 
 # WebQuery — used for /live/ paths discovered via homepage scrape (same as ap.py)
 _AP_QUERY_WEB = (
@@ -790,6 +801,36 @@ _AP_CAT_MAP = {
 }
 
 
+_AP_DATE_PUBLISHED_RE = re.compile(r'"datePublished"\s*:\s*"([^"]+)"')
+_AP_COVERAGE_START_RE = re.compile(r'"coverageStartTime"\s*:\s*"([^"]+)"')
+
+
+def _parse_iso_date(s):
+    """Parse ISO 8601 UTC string → Unix timestamp seconds."""
+    try:
+        s = re.sub(r'\.\d+', '', s).rstrip('Z')
+        if '+' in s[10:]:
+            s = s[:s.rfind('+')]
+        dt = datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+        return int(calendar.timegm(dt.timetuple()))
+    except Exception:
+        return None
+
+
+def _ap_live_blog_pub_ts(url):
+    """Fetch a live blog page and return its most recent datePublished as Unix ts."""
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html'})
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            html = resp.read(131072).decode('utf-8', errors='replace')  # first 128KB is enough
+        m = _AP_DATE_PUBLISHED_RE.search(html)
+        if m:
+            return _parse_iso_date(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
 def _ap_graphql(query, variables):
     payload = json.dumps({'query': query, 'variables': variables}).encode('utf-8')
     req = urllib.request.Request(AP_GRAPHQL_URL, data=payload, headers=_AP_HEADERS, method='POST')
@@ -809,7 +850,12 @@ def _ap_fetch_live_blogs():
             data = _ap_graphql(_AP_QUERY_WEB, {'path': path, 'adLite': True})
             web = (data.get('data') or {}).get('Web') or {}
             if web.get('headline'):
-                results.append({'title': web['headline'], 'url': f'{AP_BASE_URL}{path}', 'isLive': True})
+                url = f'{AP_BASE_URL}{path}'
+                item = {'title': web['headline'], 'url': url, 'isLive': True}
+                pts = _ap_live_blog_pub_ts(url)
+                if pts:
+                    item['pub_ts'] = pts
+                results.append(item)
         except Exception as e:
             print(f'[ap_news] live blog {path} failed: {e}')
     return results
@@ -861,6 +907,11 @@ def fetch_ap_news():
                 continue
             seen_urls.add(url)
             a = {'title': item['title'].strip(), 'url': url, 'isLive': False}
+            pd = item.get('publishDate')
+            if pd:
+                pts = _parse_ap_date(pd)
+                if pts:
+                    a['pub_ts'] = pts
             cat = item.get('category') or ''
             if item.get('liveEvent'):
                 a['isLive'] = True
