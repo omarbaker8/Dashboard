@@ -89,4 +89,29 @@
 
     grid.on('change', function (_event, items) { saveLayout(items); });
 
+    // --- Lock / Unlock Toggle ---
+    var LOCK_KEY = 'dashboard_locked';
+    var locked = localStorage.getItem(LOCK_KEY) !== 'false'; // default locked
+
+    var lockBtn  = document.getElementById('lock-toggle-btn');
+    var lockIcon = document.getElementById('lock-icon');
+
+    var LOCKED_SRC   = lockIcon.src; // already set to locked.png in template
+    var UNLOCKED_SRC = LOCKED_SRC.replace('locked.png', 'unlocked.png');
+
+    function applyLockState() {
+        grid.setStatic(locked);
+        lockIcon.src = locked ? LOCKED_SRC : UNLOCKED_SRC;
+        lockBtn.title = locked ? 'Unlock layout' : 'Lock layout';
+        lockBtn.classList.toggle('header-lock-btn--unlocked', !locked);
+    }
+
+    applyLockState();
+
+    lockBtn.addEventListener('click', function () {
+        locked = !locked;
+        localStorage.setItem(LOCK_KEY, locked ? 'true' : 'false');
+        applyLockState();
+    });
+
 })();

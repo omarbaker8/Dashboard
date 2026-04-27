@@ -32,6 +32,9 @@
         <img src="{{ url_for('static', filename='Icons/favicon.png') }}" class="header-logo" alt="Dashboard">
         {% if device %}<a href="/setup" class="header-device">{{ device.name }}</a>{% endif %}
         <div class="header-spacer"></div>
+        <button id="lock-toggle-btn" class="header-icon-btn header-lock-btn" title="Toggle layout lock">
+            <img id="lock-icon" src="{{ url_for('static', filename='Icons/locked.png') }}" alt="Locked">
+        </button>
         <a href="/settings" class="header-icon-btn" title="Settings">
             <img src="{{ url_for('static', filename='Icons/settings.svg') }}" alt="Settings">
         </a>

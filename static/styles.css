@@ -127,6 +127,21 @@ header {
     opacity: 0.75;
 }
 
+.header-lock-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.header-lock-btn--unlocked img {
+    opacity: 0.99;
+    filter: brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(80deg);
+}
+
+.header-lock-btn--unlocked:hover img {
+    opacity: 1;
+}
+
 /* --- GridStack Full Integration --- */
 .grid-stack {
     padding: 24px;
