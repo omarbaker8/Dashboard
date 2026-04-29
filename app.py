@@ -215,66 +215,119 @@ def settings():
         if action == 'update_widget':
             widget_id = request.form.get('id', '').strip()
             new_css = request.form.get('css', '').strip()
+
+            _LOC_WIDGETS = {
+                'widget-apple-weather', 'widget-apple-sunrise',
+                'widget-apple-clock', 'widget-apple-clock-analogue-dark',
+                'widget-braun-clock', 'widget-nothing-watch',
+                'widget-google-wind', 'widget-google-weather-alerts',
+                'widget-google-weather',
+            }
+            _REFRESH_WIDGETS = {
+                'widget-google-calendar', 'widget-apple-bbc', 'widget-ap-news',
+                'widget-ap-card', 'widget-kagi-news', 'widget-google-wind',
+                'widget-google-weather-alerts', 'widget-apple-weather',
+                'widget-google-weather', 'widget-luas-ie',
+            }
+
             if widget_id and new_css:
                 widgets = get_widgets_for_device(device['id'])
                 for w in widgets:
                     if w['id'] == widget_id:
                         w['css'] = new_css
-                        for key in ('lat', 'lng'):
-                            val = request.form.get(key)
-                            if val is not None:
+
+                        if widget_id in _LOC_WIDGETS:
+                            for key in ('lat', 'lng'):
+                                val = request.form.get(key)
+                                if val is not None:
+                                    try:
+                                        w[key] = float(val)
+                                    except ValueError:
+                                        pass
+                            for key in ('timezone', 'city'):
+                                val = request.form.get(key)
+                                if val is not None:
+                                    w[key] = val.strip()
+
+                        if widget_id in _REFRESH_WIDGETS:
+                            ri = request.form.get('refresh_interval')
+                            if ri is not None:
                                 try:
-                                    w[key] = float(val)
+                                    w['refresh_interval'] = int(ri)
                                 except ValueError:
                                     pass
-                        for key in ('timezone', 'city'):
-                            val = request.form.get(key)
-                            if val is not None:
-                                w[key] = val.strip()
-                        ri = request.form.get('refresh_interval')
-                        if ri is not None:
-                            try:
-                                w['refresh_interval'] = int(ri)
-                            except ValueError:
-                                pass
-                        hts = request.form.get('hours_to_show')
-                        if hts is not None:
-                            try:
-                                w['hours_to_show'] = max(1, min(12, int(hts)))
-                            except ValueError:
-                                pass
-                        _lv = request.form.get('levels')
-                        if _lv is not None:
-                            try:
-                                w['levels'] = max(1, min(10, int(_lv)))
-                            except ValueError:
-                                pass
-                        _st = request.form.get('stroke')
-                        if _st is not None:
-                            try:
-                                w['stroke'] = max(0.0, min(20.0, float(_st)))
-                            except ValueError:
-                                pass
-                        _sr = request.form.get('split_ratio')
-                        if _sr is not None:
-                            try:
-                                w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
-                            except ValueError:
-                                pass
-                        _si = request.form.get('session_interval')
-                        if _si is not None:
-                            try:
-                                w['session_interval'] = max(60, min(86400, int(_si)))
-                            except ValueError:
-                                pass
-                        _lo = request.form.get('live_only')
-                        if _lo is not None:
-                            w['live_only'] = (_lo == 'true')
-                        _kc = request.form.get('kagi_categories')
-                        if _kc is not None:
-                            cats = [c.strip() for c in _kc.split(',') if c.strip()]
-                            if cats:
-                                w['categories'] = cats
+
+                        if widget_id == 'widget-google-weather':
+                            hts = request.form.get('hours_to_show')
+                            if hts is not None:
+                                try:
+                                    w['hours_to_show'] = max(1, min(12, int(hts)))
+                                except ValueError:
+                                    pass
+
+                        if widget_id == 'widget-mondrian':
+                            _lv = request.form.get('levels')
+                            if _lv is not None:
+                                try:
+                                    w['levels'] = max(1, min(10, int(_lv)))
+                                except ValueError:
+                                    pass
+                            _st = request.form.get('stroke')
+                            if _st is not None:
+                                try:
+                                    w['stroke'] = max(0.0, min(20.0, float(_st)))
+                                except ValueError:
+                                    pass
+                            _sr = request.form.get('split_ratio')
+                            if _sr is not None:
+                                try:
+                                    w['split_ratio'] = max(0.0, min(1.0, float(_sr)))
+                                except ValueError:
+                                    pass
+
+                        if widget_id in {'widget-ap-news', 'widget-ap-card'}:
+                            _si = request.form.get('session_interval')
+                            if _si is not None:
+                                try:
+                                    w['session_interval'] = max(60, min(86400, int(_si)))
+                                except ValueError:
+                                    pass
+
+                        if widget_id in {'widget-apple-bbc', 'widget-ap-news'}:
+                            _lo = request.form.get('live_only')
+                            if _lo is not None:
+                                w['live_only'] = (_lo == 'true')
+
+                        if widget_id == 'widget-kagi-news':
+                            _kc = request.form.get('kagi_categories')
+                            if _kc is not None:
+                                cats = [c.strip() for c in _kc.split(',') if c.strip()]
+                                if cats:
+                                    w['categories'] = cats
+
+                        if widget_id == 'widget-luas-ie':
+                            _sc = request.form.get('stop_code')
+                            if _sc is not None:
+                                w['stop_code'] = _sc.strip().upper() or 'CHE'
+
+                        # Purge any stale cross-widget keys that don't belong here
+                        if widget_id not in _LOC_WIDGETS:
+                            for _k in ('lat', 'lng', 'timezone', 'city'):
+                                w.pop(_k, None)
+                        if widget_id != 'widget-google-weather':
+                            w.pop('hours_to_show', None)
+                        if widget_id != 'widget-mondrian':
+                            for _k in ('levels', 'stroke', 'split_ratio'):
+                                w.pop(_k, None)
+                        if widget_id not in {'widget-ap-news', 'widget-ap-card'}:
+                            w.pop('session_interval', None)
+                        if widget_id not in {'widget-apple-bbc', 'widget-ap-news'}:
+                            w.pop('live_only', None)
+                        if widget_id != 'widget-kagi-news':
+                            w.pop('categories', None)
+                        if widget_id != 'widget-luas-ie':
+                            w.pop('stop_code', None)
+
                         save_device_widget(device['id'], w)
                         break
             if is_ajax:
@@ -1246,6 +1299,59 @@ def api_google_cal_url():
     raw = os.getenv('GOOGLE_CAL_IFRAME_URL', '')
     # Extract just the src URL from the iframe HTML if needed
     return jsonify({"url": raw})
+
+
+# ---------------------------------------------------------------------------
+# API: Luas real-time forecasts
+# ---------------------------------------------------------------------------
+
+import xml.etree.ElementTree as ET
+
+LUAS_API_URL = 'https://luasforecasts.rpa.ie/xml/get.ashx'
+_luas_cache = {}  # {stop_code: {'ts': float, 'data': dict}}
+_LUAS_TTL = 60   # 1-minute cache per stop
+
+
+def fetch_luas_data(stop_code='CHE'):
+    stop_code = stop_code.upper()
+    now = time.time()
+    cached = _luas_cache.get(stop_code)
+    if cached and (now - cached['ts']) < _LUAS_TTL:
+        return cached['data']
+    try:
+        resp = requests.get(
+            LUAS_API_URL,
+            params={'action': 'forecast', 'stop': stop_code, 'encrypt': 'false'},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        root = ET.fromstring(resp.content)
+        stop_name = root.attrib.get('stop', stop_code)
+        message = root.findtext('message', '')
+        directions = []
+        for direction in root.findall('direction'):
+            dir_name = direction.attrib.get('name', '')
+            trams = []
+            for tram in direction.findall('tram'):
+                trams.append({
+                    'destination': tram.attrib.get('destination', ''),
+                    'dueMins': tram.attrib.get('dueMins', ''),
+                })
+            directions.append({'name': dir_name, 'trams': trams})
+        data = {'stop': stop_name, 'message': message, 'directions': directions, 'error': None}
+        _luas_cache[stop_code] = {'ts': now, 'data': data}
+        return data
+    except Exception as e:
+        print(f'[luas] fetch failed for {stop_code}: {e}')
+        if cached:
+            return cached['data']
+        return {'stop': stop_code, 'message': '', 'directions': [], 'error': str(e)}
+
+
+@app.route('/api/luas')
+def api_luas():
+    stop_code = request.args.get('stop', 'CHE').strip().upper()
+    return jsonify(fetch_luas_data(stop_code))
 
 
 # ---------------------------------------------------------------------------

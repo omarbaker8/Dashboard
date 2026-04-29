@@ -18,7 +18,28 @@
     (function(){
         var v = document.getElementById('bg-video-el');
         if (!v) return;
-        v.addEventListener('ended', function() { v.currentTime = 0; v.play(); });
+
+        function resume() {
+            if (v.paused) v.play().catch(function(){});
+        }
+
+        // Restart on natural end (fallback if loop attr fails)
+        v.addEventListener('ended', function() { v.currentTime = 0; v.play().catch(function(){}); });
+
+        // Resume when OS/browser suspends playback unexpectedly
+        v.addEventListener('pause', function() {
+            if (!document.hidden) v.play().catch(function(){});
+        });
+
+        // Resume when tab/display comes back from sleep
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) resume();
+        });
+
+        // Backstop: check every 30 s in case all events were missed
+        setInterval(function() {
+            if (!document.hidden) resume();
+        }, 30000);
     })();
     </script>
     {% endif %}
@@ -52,19 +73,22 @@
              gs-min-h="1"
              {% if widget.lock_ratio %}data-lock-ratio="1"{% endif %}>
             <div class="grid-stack-item-content">
+                {% set _loc = widget.id in ['widget-apple-weather','widget-apple-sunrise','widget-apple-clock','widget-apple-clock-analogue-dark','widget-braun-clock','widget-nothing-watch','widget-google-wind','widget-google-weather-alerts','widget-google-weather'] %}
+                {% set _has_refresh = widget.id in ['widget-google-calendar','widget-apple-bbc','widget-ap-news','widget-ap-card','widget-kagi-news','widget-google-wind','widget-google-weather-alerts','widget-apple-weather','widget-google-weather','widget-luas-ie'] %}
                 <div class="widget-item" style="{{ widget.css }}"
-                     {% if widget.lat is defined %}data-lat="{{ widget.lat }}"{% endif %}
-                     {% if widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}
-                     {% if widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
-                     {% if widget.city is defined %}data-city="{{ widget.city }}"{% endif %}
-                     {% if widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}
-                     {% if widget.session_interval is defined %}data-session="{{ widget.session_interval }}"{% endif %}
-                     {% if widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}
-                     {% if widget.levels is defined %}data-levels="{{ widget.levels }}"{% endif %}
-                     {% if widget.stroke is defined %}data-stroke="{{ widget.stroke }}"{% endif %}
-                     {% if widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}
-                     {% if widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}
-                     {% if widget.live_only is defined %}data-live-only="{{ 'true' if widget.live_only else 'false' }}"{% endif %}>
+                     {% if _loc and widget.lat is defined %}data-lat="{{ widget.lat }}"{% endif %}
+                     {% if _loc and widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}
+                     {% if _loc and widget.timezone is defined %}data-timezone="{{ widget.timezone }}"{% endif %}
+                     {% if _loc and widget.city is defined %}data-city="{{ widget.city }}"{% endif %}
+                     {% if _has_refresh and widget.refresh_interval is defined %}data-refresh="{{ widget.refresh_interval }}"{% endif %}
+                     {% if widget.id in ['widget-ap-news','widget-ap-card'] and widget.session_interval is defined %}data-session="{{ widget.session_interval }}"{% endif %}
+                     {% if widget.id == 'widget-google-weather' and widget.hours_to_show is defined %}data-hours="{{ widget.hours_to_show }}"{% endif %}
+                     {% if widget.id == 'widget-mondrian' and widget.levels is defined %}data-levels="{{ widget.levels }}"{% endif %}
+                     {% if widget.id == 'widget-mondrian' and widget.stroke is defined %}data-stroke="{{ widget.stroke }}"{% endif %}
+                     {% if widget.id == 'widget-mondrian' and widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}
+                     {% if widget.id == 'widget-kagi-news' and widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}
+                     {% if widget.id in ['widget-apple-bbc','widget-ap-news'] and widget.live_only is defined %}data-live-only="{{ 'true' if widget.live_only else 'false' }}"{% endif %}
+                     {% if widget.id == 'widget-luas-ie' and widget.stop_code is defined %}data-stop="{{ widget.stop_code }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>

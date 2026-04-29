@@ -517,6 +517,25 @@
                     </div>
                     {% endif %}
 
+                    <!-- Luas stop selector -->
+                    {% if widget.id == 'widget-luas-ie' %}
+                    <div class="control-section">
+                        <label class="settings-input-label">Luas Stop
+                            <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">type code or name</span>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="text" class="settings-input" id="luas-stop-{{ loop.index0 }}"
+                                   autocomplete="off" maxlength="20"
+                                   value="{{ widget.get('stop_code', 'CHE') }}"
+                                   placeholder="e.g. CHE or Cherrywood"
+                                   style="margin-bottom:0;letter-spacing:.08em;font-weight:700;">
+                            <div id="luas-drop-{{ loop.index0 }}"
+                                 style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(22,22,26,0.97);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.1);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.55);z-index:1000;scrollbar-width:thin;"></div>
+                        </div>
+                    </div>
+                    <script>if(window._initLuasAC)window._initLuasAC({{ loop.index0 }});</script>
+                    {% endif %}
+
                     <!-- Hours to show (google-weather only) -->
                     {% if widget.id == 'widget-google-weather' %}
                     {% set _hrs = widget.get('hours_to_show', 3) %}
@@ -543,14 +562,15 @@
                         <input type="hidden" name="lng" id="lng-out-{{ loop.index0 }}" value="{{ widget.get('lng', '') }}">
                         <input type="hidden" name="timezone" id="tz-out-{{ loop.index0 }}" value="{{ widget.get('timezone', '') }}">
                         <input type="hidden" name="city" id="city-out-{{ loop.index0 }}" value="{{ widget.get('city', '') }}">
-                        <input type="hidden" name="refresh_interval" id="refresh-out-{{ loop.index0 }}" value="{{ widget.get('refresh_interval', _refresh_widgets.get(widget.id, 60)) }}">
-                        <input type="hidden" name="hours_to_show" id="hours-out-{{ loop.index0 }}" value="{{ widget.get('hours_to_show', 3) }}">
-                        <input type="hidden" name="levels" id="mon-levels-out-{{ loop.index0 }}" value="{{ widget.get('levels', 4) }}">
-                        <input type="hidden" name="stroke" id="mon-stroke-out-{{ loop.index0 }}" value="{{ widget.get('stroke', 2) }}">
-                        <input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">
-                        <input type="hidden" name="kagi_categories" id="kagi-cats-out-{{ loop.index0 }}" value="{{ widget.get('categories', ['tech','ai','science']) | join(',') }}">
-                        <input type="hidden" name="live_only" id="live-only-out-{{ loop.index0 }}" value="{{ 'true' if widget.get('live_only') else 'false' }}">
-                        <input type="hidden" name="session_interval" id="session-out-{{ loop.index0 }}" value="{{ widget.get('session_interval', 28800) }}">
+                        {% if widget.id in _refresh_widgets %}<input type="hidden" name="refresh_interval" id="refresh-out-{{ loop.index0 }}" value="{{ widget.get('refresh_interval', _refresh_widgets.get(widget.id, 60)) }}">{% endif %}
+                        {% if widget.id == 'widget-google-weather' %}<input type="hidden" name="hours_to_show" id="hours-out-{{ loop.index0 }}" value="{{ widget.get('hours_to_show', 3) }}">{% endif %}
+                        {% if widget.id == 'widget-mondrian' %}<input type="hidden" name="levels" id="mon-levels-out-{{ loop.index0 }}" value="{{ widget.get('levels', 4) }}">{% endif %}
+                        {% if widget.id == 'widget-mondrian' %}<input type="hidden" name="stroke" id="mon-stroke-out-{{ loop.index0 }}" value="{{ widget.get('stroke', 2) }}">{% endif %}
+                        {% if widget.id == 'widget-mondrian' %}<input type="hidden" name="split_ratio" id="mon-split-out-{{ loop.index0 }}" value="{{ widget.get('split_ratio', 0.5) }}">{% endif %}
+                        {% if widget.id == 'widget-kagi-news' %}<input type="hidden" name="kagi_categories" id="kagi-cats-out-{{ loop.index0 }}" value="{{ widget.get('categories', ['tech','ai','science']) | join(',') }}">{% endif %}
+                        {% if widget.id in ['widget-apple-bbc', 'widget-ap-news'] %}<input type="hidden" name="live_only" id="live-only-out-{{ loop.index0 }}" value="{{ 'true' if widget.get('live_only') else 'false' }}">{% endif %}
+                        {% if widget.id in ['widget-ap-news', 'widget-ap-card'] %}<input type="hidden" name="session_interval" id="session-out-{{ loop.index0 }}" value="{{ widget.get('session_interval', 28800) }}">{% endif %}
+                        {% if widget.id == 'widget-luas-ie' %}<input type="hidden" name="stop_code" id="luas-stop-out-{{ loop.index0 }}" value="{{ widget.get('stop_code', 'CHE') }}">{% endif %}
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -1309,6 +1329,8 @@
             if (liveOnlyCb) document.getElementById('live-only-out-' + idx).value = liveOnlyCb.checked ? 'true' : 'false';
             var sessionSel = document.getElementById('session-' + idx);
             if (sessionSel) document.getElementById('session-out-' + idx).value = sessionSel.value;
+            var luasStopIn = document.getElementById('luas-stop-' + idx);
+            if (luasStopIn) document.getElementById('luas-stop-out-' + idx).value = luasStopIn.value.trim().toUpperCase();
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });
@@ -1472,6 +1494,96 @@
                     sDrop.style.display = 'none';
             });
         })();
+
+        // ============================================================
+        // Luas stop autocomplete
+        // ============================================================
+        var _LUAS_STOPS = [
+            ['STX',"St. Stephen's Green"],['HIN','Heuston'],['HCT','Heuston'],
+            ['TPT','The Point'],['SDK','Spencer Dock'],['MYS','Mayor Square NCI'],
+            ['GDK',"George's Dock"],['CON','Connolly'],['BUS','Busáras'],
+            ['ABB','Abbey Street'],['JER','Jervis'],['FOU','Four Courts'],
+            ['SMI','Smithfield'],['MUS','Museum'],['HEU','Heuston'],
+            ['JAM',"James's"],['FAT','Fatima'],['RIA','Rialto'],
+            ['SUI','Suir Road'],['GOL','Goldenbridge'],['DRI','Drimnagh'],
+            ['BLA','Blackhorse'],['BLU','Bluebell'],['KYL','Kylemore'],
+            ['RED','Red Cow'],['KIN','Kingswood'],['BEL','Belgard'],
+            ['COO','Cookstown'],['HOS','Hospital'],['TAL','Tallaght'],
+            ['FET','Fettercairn'],['CVN','Cheeverstown'],['CIT','Citywest Campus'],
+            ['FOR','Fortunestown'],['SAG','Saggart'],['DEP','Depot'],
+            ['BRO','Broombridge'],['CAB','Cabra'],['PHI','Phibsborough'],
+            ['GRA','Grangegorman'],['BRD','Broadstone DIT'],['DOM','Dominick'],
+            ['PAR','Parnell'],['OUP',"O'Connell Upper"],['OGP',"O'Connell GPO"],
+            ['MAR','Marlborough'],['WES','Westmoreland'],['TRY','Trinity'],
+            ['DAW','Dawson'],['STS',"St. Stephen's Green"],['HAR','Harcourt'],
+            ['CHA','Charlemont'],['RAN','Ranelagh'],['BEE','Beechwood'],
+            ['COW','Cowper'],['MIL','Milltown'],['WIN','Windy Arbour'],
+            ['DUN','Dundrum'],['BAL','Balally'],['KIL','Kilmacud'],
+            ['STI','Stillorgan'],['SAN','Sandyford'],['CPK','Central Park'],
+            ['GLE','Glencairn'],['GAL','The Gallops'],['LEO','Leopardstown Valley'],
+            ['BAW','Ballyogan Wood'],['RCC','Racecourse'],['CCK','Carrickmines'],
+            ['BRE','Brennanstown'],['LAU','Laughanstown'],['CHE','Cherrywood'],
+            ['BRI',"Bride's Glen"]
+        ];
+
+        window._initLuasAC = function(idx) {
+            var input = document.getElementById('luas-stop-' + idx);
+            var drop  = document.getElementById('luas-drop-' + idx);
+            var hiddenOut = document.getElementById('luas-stop-out-' + idx);
+            if (!input || !drop) return;
+
+            function renderDrop(items) {
+                if (!items.length) { drop.style.display = 'none'; return; }
+                var h = '';
+                items.forEach(function(s) {
+                    h += '<div class="luas-ac-item" data-code="' + s[0] + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .12s;">'
+                       + '<span style="font-family:monospace;font-weight:700;font-size:13px;color:#fff;min-width:34px;flex-shrink:0;">' + s[0] + '</span>'
+                       + '<span style="font-size:13px;color:rgba(255,255,255,0.55);">' + s[1] + '</span>'
+                       + '</div>';
+                });
+                drop.innerHTML = h;
+                drop.style.display = 'block';
+                drop.querySelectorAll('.luas-ac-item').forEach(function(item) {
+                    item.addEventListener('mouseover',  function() { item.style.background = 'rgba(255,255,255,0.07)'; });
+                    item.addEventListener('mouseout',   function() { item.style.background = ''; });
+                    item.addEventListener('mousedown',  function(e) {
+                        e.preventDefault();
+                        var code = item.dataset.code;
+                        input.value = code;
+                        if (hiddenOut) hiddenOut.value = code;
+                        drop.style.display = 'none';
+                    });
+                });
+            }
+
+            function filter(q) {
+                q = q.trim().toUpperCase();
+                if (!q) return [];
+                return _LUAS_STOPS.filter(function(s) {
+                    return s[0].indexOf(q) === 0 || s[1].toUpperCase().indexOf(q) !== -1;
+                }).slice(0, 12);
+            }
+
+            input.addEventListener('input', function() {
+                renderDrop(filter(input.value));
+            });
+            input.addEventListener('focus', function() {
+                if (input.value.trim()) renderDrop(filter(input.value));
+            });
+            input.addEventListener('blur', function() {
+                setTimeout(function() { drop.style.display = 'none'; }, 180);
+                if (hiddenOut) hiddenOut.value = input.value.trim().toUpperCase();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') drop.style.display = 'none';
+            });
+        };
+
+        // Init any luas stop pickers already in the DOM
+        document.querySelectorAll('[id^="luas-drop-"]').forEach(function(el) {
+            var idx = el.id.replace('luas-drop-', '');
+            window._initLuasAC(idx);
+        });
 
     })();
     </script>
