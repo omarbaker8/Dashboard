@@ -19,27 +19,41 @@
         var v = document.getElementById('bg-video-el');
         if (!v) return;
 
-        function resume() {
-            if (v.paused) v.play().catch(function(){});
+        var _lastTime = -1;
+        var _staleTicks = 0;
+
+        function forcePlay() {
+            v.load();
+            v.play().catch(function(){});
         }
 
-        // Restart on natural end (fallback if loop attr fails)
-        v.addEventListener('ended', function() { v.currentTime = 0; v.play().catch(function(){}); });
+        function resume() {
+            if (v.paused || v.ended) v.play().catch(function(){});
+        }
 
-        // Resume when OS/browser suspends playback unexpectedly
-        v.addEventListener('pause', function() {
-            if (!document.hidden) v.play().catch(function(){});
-        });
+        v.addEventListener('ended',  function() { v.currentTime = 0; v.play().catch(function(){}); });
+        v.addEventListener('pause',  function() { if (!document.hidden) v.play().catch(function(){}); });
+        v.addEventListener('stalled',  forcePlay);
+        v.addEventListener('suspend',  function() { if (!document.hidden) resume(); });
+        v.addEventListener('error',    forcePlay);
 
-        // Resume when tab/display comes back from sleep
         document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) resume();
+            if (!document.hidden) { _lastTime = -1; _staleTicks = 0; resume(); }
         });
 
-        // Backstop: check every 30 s in case all events were missed
+        // Watchdog: every 5 s track whether currentTime is advancing.
+        // Two consecutive stale ticks (10 s frozen) → hard reload + play.
         setInterval(function() {
-            if (!document.hidden) resume();
-        }, 30000);
+            if (document.hidden) return;
+            var t = v.currentTime;
+            if (t === _lastTime) {
+                _staleTicks++;
+                if (_staleTicks >= 2) { _staleTicks = 0; forcePlay(); }
+            } else {
+                _staleTicks = 0;
+            }
+            _lastTime = t;
+        }, 5000);
     })();
     </script>
     {% endif %}
