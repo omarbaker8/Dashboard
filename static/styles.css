@@ -170,6 +170,14 @@ header {
     inset: 8px !important; /* GridStack margin override for proper gap */
 }
 
+/* Hide scrollbars inside all widgets */
+.grid-stack-item-content *::-webkit-scrollbar {
+    display: none;
+}
+.grid-stack-item-content * {
+    scrollbar-width: none;
+}
+
 /* --- Widget Surface --- */
 .widget-item {
     width: 100%;

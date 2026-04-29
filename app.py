@@ -1276,6 +1276,25 @@ def _kagi_get(path, params=None):
         return json.loads(resp.read())
 
 
+def _fetch_og_image(articles):
+    for article in articles:
+        link = article.get('link') if isinstance(article, dict) else getattr(article, 'link', None)
+        if not link:
+            continue
+        try:
+            req = urllib.request.Request(link, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                html = resp.read(32768).decode('utf-8', errors='ignore')
+            match = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\'](https?://[^"\']+)', html)
+            if not match:
+                match = re.search(r'<meta[^>]+content=["\'](https?://[^"\']+)["\'][^>]+property=["\']og:image["\']', html)
+            if match:
+                return match.group(1)
+        except Exception:
+            continue
+    return ''
+
+
 def fetch_kagi_stories(categories=None):
     if categories is None:
         categories = _KAGI_CATEGORIES
@@ -1293,6 +1312,7 @@ def fetch_kagi_stories(categories=None):
         cat_map = {c['categoryId']: c['id'] for c in cat_list}
 
         stories = []
+        needs_og = []  # (index, articles) for stories with no image
         for cat_id in categories:
             uuid = cat_map.get(cat_id)
             if not uuid:
@@ -1313,8 +1333,20 @@ def fetch_kagi_stories(categories=None):
                         'sources':  sources,
                         'url':      url,
                     })
+                    if not img:
+                        needs_og.append((len(stories) - 1, s.get('articles') or []))
             except Exception as e:
                 print(f'[kagi] stories for {cat_id} failed: {e}')
+
+        if needs_og:
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                futures = {pool.submit(_fetch_og_image, arts): idx for idx, arts in needs_og}
+                for fut in as_completed(futures):
+                    idx = futures[fut]
+                    try:
+                        stories[idx]['image'] = fut.result() or ''
+                    except Exception:
+                        pass
 
         if stories:
             _kagi_cache['stories'] = stories
