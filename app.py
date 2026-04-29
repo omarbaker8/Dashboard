@@ -309,6 +309,9 @@ def settings():
                             _sc = request.form.get('stop_code')
                             if _sc is not None:
                                 w['stop_code'] = _sc.strip().upper() or 'CHE'
+                            _dir = request.form.get('direction')
+                            if _dir in ('both', 'inbound', 'outbound'):
+                                w['direction'] = _dir
 
                         # Purge any stale cross-widget keys that don't belong here
                         if widget_id not in _LOC_WIDGETS:
@@ -327,6 +330,7 @@ def settings():
                             w.pop('categories', None)
                         if widget_id != 'widget-luas-ie':
                             w.pop('stop_code', None)
+                            w.pop('direction', None)
 
                         save_device_widget(device['id'], w)
                         break

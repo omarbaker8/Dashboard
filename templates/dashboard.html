@@ -88,7 +88,8 @@
                      {% if widget.id == 'widget-mondrian' and widget.split_ratio is defined %}data-split="{{ widget.split_ratio }}"{% endif %}
                      {% if widget.id == 'widget-kagi-news' and widget.categories is defined %}data-categories="{{ widget.categories | join(',') }}"{% endif %}
                      {% if widget.id in ['widget-apple-bbc','widget-ap-news'] and widget.live_only is defined %}data-live-only="{{ 'true' if widget.live_only else 'false' }}"{% endif %}
-                     {% if widget.id == 'widget-luas-ie' and widget.stop_code is defined %}data-stop="{{ widget.stop_code }}"{% endif %}>
+                     {% if widget.id == 'widget-luas-ie' and widget.stop_code is defined %}data-stop="{{ widget.stop_code }}"{% endif %}
+                     {% if widget.id == 'widget-luas-ie' and widget.direction is defined %}data-direction="{{ widget.direction }}"{% endif %}>
                     {{ widget.content | safe }}
                 </div>
             </div>

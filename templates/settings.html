@@ -533,6 +533,20 @@
                                  style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(22,22,26,0.97);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.1);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.55);z-index:1000;scrollbar-width:thin;"></div>
                         </div>
                     </div>
+                    <div class="control-section">
+                        <label class="settings-input-label">Directions</label>
+                        {% set _ldir = widget.get('direction', 'both') %}
+                        <div style="display:flex;gap:18px;margin-top:4px;">
+                            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer;">
+                                <input type="checkbox" id="luas-inb-{{ loop.index0 }}" {% if _ldir in ('both','inbound') %}checked{% endif %} style="accent-color:#ff9500;cursor:pointer;width:15px;height:15px;">
+                                Inbound
+                            </label>
+                            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer;">
+                                <input type="checkbox" id="luas-out-{{ loop.index0 }}" {% if _ldir in ('both','outbound') %}checked{% endif %} style="accent-color:#ff9500;cursor:pointer;width:15px;height:15px;">
+                                Outbound
+                            </label>
+                        </div>
+                    </div>
                     <script>if(window._initLuasAC)window._initLuasAC({{ loop.index0 }});</script>
                     {% endif %}
 
@@ -571,6 +585,7 @@
                         {% if widget.id in ['widget-apple-bbc', 'widget-ap-news'] %}<input type="hidden" name="live_only" id="live-only-out-{{ loop.index0 }}" value="{{ 'true' if widget.get('live_only') else 'false' }}">{% endif %}
                         {% if widget.id in ['widget-ap-news', 'widget-ap-card'] %}<input type="hidden" name="session_interval" id="session-out-{{ loop.index0 }}" value="{{ widget.get('session_interval', 28800) }}">{% endif %}
                         {% if widget.id == 'widget-luas-ie' %}<input type="hidden" name="stop_code" id="luas-stop-out-{{ loop.index0 }}" value="{{ widget.get('stop_code', 'CHE') }}">{% endif %}
+                        {% if widget.id == 'widget-luas-ie' %}<input type="hidden" name="direction" id="luas-dir-out-{{ loop.index0 }}" value="{{ widget.get('direction', 'both') }}">{% endif %}
                     </form>
                     <div class="control-section" style="display:flex; gap:8px;">
                         <button class="btn btn-primary" onclick="saveWidget({{ loop.index0 }})">Save</button>
@@ -1331,6 +1346,13 @@
             if (sessionSel) document.getElementById('session-out-' + idx).value = sessionSel.value;
             var luasStopIn = document.getElementById('luas-stop-' + idx);
             if (luasStopIn) document.getElementById('luas-stop-out-' + idx).value = luasStopIn.value.trim().toUpperCase();
+            var luasDirOut = document.getElementById('luas-dir-out-' + idx);
+            if (luasDirOut) {
+                var inb = document.getElementById('luas-inb-' + idx);
+                var out = document.getElementById('luas-out-' + idx);
+                var inbOn = inb && inb.checked, outOn = out && out.checked;
+                luasDirOut.value = (inbOn && outOn) ? 'both' : inbOn ? 'inbound' : outOn ? 'outbound' : 'both';
+            }
             postForm(document.getElementById('form-' + idx))
                 .then(function(r) { toast(r.status === 'ok' ? 'Saved' : 'Failed', r.status === 'ok' ? 'ok' : 'err'); })
                 .catch(function() { toast('Save failed', 'err'); });
