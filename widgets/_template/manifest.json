@@ -1,0 +1,37 @@
+{
+    "id": "widget-your-name",
+    "name": "Your Widget Name",
+    "description": "One sentence describing what this widget shows.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 3, "h": 3 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 6, "h": 6 }
+    },
+    "settings": [
+        {
+            "key": "example_setting",
+            "type": "string",
+            "label": "Example Setting",
+            "default": "value",
+            "maxLength": 40
+        }
+    ],
+    "refresh": { "default": 900, "min": 60, "max": 86400 },
+    "requires": {
+        "location": false,
+        "api": ["/api/your_endpoint"],
+        "env": []
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

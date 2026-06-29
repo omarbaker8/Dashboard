@@ -1,0 +1,35 @@
+{
+    "id": "widget-apple-bbc",
+    "name": "BBC News",
+    "description": "Live BBC News headlines from the BBC live news feed.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 4, "h": 4 },
+        "min":     { "w": 2, "h": 3 },
+        "max":     { "w": 8, "h": 8 }
+    },
+    "settings": [
+        {
+            "key": "live_only",
+            "type": "boolean",
+            "label": "Live news only",
+            "default": false
+        }
+    ],
+    "refresh": { "default": 900, "min": 60, "max": 3600 },
+    "requires": {
+        "location": false,
+        "api": ["/api/bbc_news"]
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

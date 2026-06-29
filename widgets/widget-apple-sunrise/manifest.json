@@ -1,0 +1,42 @@
+{
+    "id": "widget-apple-sunrise",
+    "name": "Sunrise & Sunset",
+    "description": "Today's sunrise and sunset times with sun arc visualisation.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 2, "h": 2 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 5, "h": 5 }
+    },
+    "settings": [
+        {
+            "key": "lat",
+            "type": "latitude",
+            "label": "Latitude",
+            "default": 53.3498,
+            "required": true
+        },
+        {
+            "key": "lng",
+            "type": "longitude",
+            "label": "Longitude",
+            "default": -6.2603,
+            "required": true
+        }
+    ],
+    "requires": {
+        "location": true,
+        "api": []
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

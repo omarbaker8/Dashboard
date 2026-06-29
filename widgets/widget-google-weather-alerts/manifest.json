@@ -1,0 +1,44 @@
+{
+    "id": "widget-google-weather-alerts",
+    "name": "Weather Alerts",
+    "description": "Live weather alerts for the configured location via the Google Weather API.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 2, "h": 2 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 6, "h": 4 }
+    },
+    "settings": [
+        {
+            "key": "lat",
+            "type": "latitude",
+            "label": "Latitude",
+            "default": 53.3498,
+            "required": true
+        },
+        {
+            "key": "lng",
+            "type": "longitude",
+            "label": "Longitude",
+            "default": -6.2603,
+            "required": true
+        }
+    ],
+    "refresh": { "default": 900, "min": 300, "max": 86400 },
+    "requires": {
+        "location": true,
+        "api": ["/api/google_weather_alerts"],
+        "env": ["GOOGLE_WEATHER_KEY"]
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

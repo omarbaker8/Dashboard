@@ -1,0 +1,27 @@
+{
+    "id": "widget-apple-calendar",
+    "name": "Calendar",
+    "description": "Monthly calendar view with today highlighted.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 2, "h": 2 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 5, "h": 5 }
+    },
+    "settings": [],
+    "requires": {
+        "location": false,
+        "api": []
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

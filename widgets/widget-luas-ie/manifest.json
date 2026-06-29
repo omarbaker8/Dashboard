@@ -1,0 +1,44 @@
+{
+    "id": "widget-luas-ie",
+    "name": "Luas",
+    "description": "Real-time Luas tram forecasts for any stop on the Dublin light rail network.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 3, "h": 3 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 6, "h": 6 }
+    },
+    "settings": [
+        {
+            "key": "stop_code",
+            "type": "string",
+            "label": "Stop Code",
+            "description": "Luas stop abbreviation (e.g. CHE for Cherrywood)",
+            "default": "CHE",
+            "maxLength": 5
+        },
+        {
+            "key": "direction",
+            "type": "enum",
+            "label": "Direction",
+            "default": "both",
+            "options": ["both", "inbound", "outbound"]
+        }
+    ],
+    "refresh": { "default": 60, "min": 30, "max": 300 },
+    "requires": {
+        "location": false,
+        "api": ["/api/luas"]
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

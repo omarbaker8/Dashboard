@@ -1,0 +1,65 @@
+{
+    "id": "widget-google-weather",
+    "name": "Google Weather",
+    "description": "Hourly forecast chart powered by the Google Weather API.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 8, "h": 3 },
+        "min":     { "w": 4, "h": 2 },
+        "max":     { "w": 12, "h": 6 }
+    },
+    "settings": [
+        {
+            "key": "timezone",
+            "type": "timezone",
+            "label": "Timezone",
+            "default": "Europe/Dublin"
+        },
+        {
+            "key": "city",
+            "type": "string",
+            "label": "City",
+            "default": "Dublin",
+            "maxLength": 40
+        },
+        {
+            "key": "lat",
+            "type": "latitude",
+            "label": "Latitude",
+            "default": 53.3498,
+            "required": true
+        },
+        {
+            "key": "lng",
+            "type": "longitude",
+            "label": "Longitude",
+            "default": -6.2603,
+            "required": true
+        },
+        {
+            "key": "hours_to_show",
+            "type": "integer",
+            "label": "Hours to Show",
+            "default": 3,
+            "min": 1,
+            "max": 12
+        }
+    ],
+    "refresh": { "default": 900, "min": 300, "max": 86400 },
+    "requires": {
+        "location": true,
+        "api": ["/api/google_weather"],
+        "env": ["GOOGLE_WEATHER_KEY"]
+    },
+    "appearance": {
+        "theme": true,
+        "background": true,
+        "text_color": true,
+        "opacity": true,
+        "blur": true,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": true
+    }
+}

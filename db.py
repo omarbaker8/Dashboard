@@ -248,6 +248,7 @@ _LAPTOP_LAYOUT = [
     ("widget-nothing-watch",              3,  6, 3, 3, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-weather",            10,  4, 8, 3, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
     ("widget-mondrian",                   6,  7, 4, 4, "background-color: #F5F0E6; border-radius: min(28px, 15cqmin); overflow: hidden; box-shadow: 0 6px 28px rgba(0,0,0,0.5); border: 2px solid #111;", {"levels": 4, "stroke": 2, "split_ratio": 0.5}),
+    ("widget-aljazeera-world-cup",       10,  6, 5, 5, "background: #0a0e1a; border-radius: min(28px, 15cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.85); overflow: hidden; color: #fff;", {}),
 ]
 
 _TABLET_LAYOUT = [
@@ -267,6 +268,7 @@ _TABLET_LAYOUT = [
     ("widget-nothing-watch",             0, 21,  4, 4, "background: #0A0A0A; border-radius: min(28px, 14cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.8);", {"timezone": "Europe/Dublin", "city": "Dublin"}),
     ("widget-google-weather",            4, 10,  8, 4, GLASS_CSS,           {"lat": 53.35, "lng": -6.26, "timezone": "Europe/Dublin", "city": "Dublin", "hours_to_show": 3}),
     ("widget-mondrian",                  0, 25,  4, 4, "background-color: #F5F0E6; border-radius: min(28px, 15cqmin); overflow: hidden; box-shadow: 0 6px 28px rgba(0,0,0,0.5); border: 2px solid #111;", {"levels": 4, "stroke": 2, "split_ratio": 0.5}),
+    ("widget-aljazeera-world-cup",       0, 29,  6, 6, "background: #0a0e1a; border-radius: min(28px, 15cqmin); box-shadow: 0 8px 32px rgba(0,0,0,0.85); overflow: hidden; color: #fff;", {}),
 ]
 
 
@@ -290,6 +292,22 @@ LOCATION_WIDGETS = {
     'widget-braun-clock', 'widget-nothing-watch',
     'widget-google-wind', 'widget-google-weather-alerts',
     'widget-google-weather',
+    'widget-aljazeera-world-cup',
+}
+
+# Widget IDs that poll an API, mapped to their default refresh interval (seconds)
+REFRESH_WIDGET_DEFAULTS = {
+    'widget-google-calendar':       900,
+    'widget-apple-bbc':             900,
+    'widget-ap-news':               900,
+    'widget-ap-card':               300,
+    'widget-kagi-news':             1800,
+    'widget-google-wind':           900,
+    'widget-google-weather-alerts': 900,
+    'widget-apple-weather':         900,
+    'widget-google-weather':        900,
+    'widget-luas-ie':               60,
+    'widget-aljazeera-world-cup':   60,
 }
 
 

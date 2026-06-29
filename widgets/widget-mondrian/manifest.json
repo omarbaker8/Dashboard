@@ -1,0 +1,55 @@
+{
+    "id": "widget-mondrian",
+    "name": "Mondrian",
+    "description": "Generative Piet Mondrian-style geometric art. Redraws on each interval.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 4, "h": 4 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 8, "h": 8 }
+    },
+    "settings": [
+        {
+            "key": "levels",
+            "type": "integer",
+            "label": "Levels",
+            "description": "Recursive split depth (complexity)",
+            "default": 4,
+            "min": 1,
+            "max": 10
+        },
+        {
+            "key": "stroke",
+            "type": "float",
+            "label": "Stroke Width",
+            "description": "Grid line thickness in pixels (0 to disable)",
+            "default": 2.0,
+            "min": 0.0,
+            "max": 20.0
+        },
+        {
+            "key": "split_ratio",
+            "type": "float",
+            "label": "Cut Density",
+            "description": "How aggressively the canvas is subdivided",
+            "default": 0.5,
+            "min": 0.0,
+            "max": 1.0
+        }
+    ],
+    "requires": {
+        "location": false,
+        "api": []
+    },
+    "appearance": {
+        "theme": false,
+        "background": false,
+        "text_color": false,
+        "opacity": true,
+        "blur": false,
+        "border_radius": true,
+        "border": true,
+        "shadow": true,
+        "font_family": false
+    }
+}

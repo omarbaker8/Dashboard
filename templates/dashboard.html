@@ -87,8 +87,8 @@
              gs-min-h="1"
              {% if widget.lock_ratio %}data-lock-ratio="1"{% endif %}>
             <div class="grid-stack-item-content">
-                {% set _loc = widget.id in ['widget-apple-weather','widget-apple-sunrise','widget-apple-clock','widget-apple-clock-analogue-dark','widget-braun-clock','widget-nothing-watch','widget-google-wind','widget-google-weather-alerts','widget-google-weather'] %}
-                {% set _has_refresh = widget.id in ['widget-google-calendar','widget-apple-bbc','widget-ap-news','widget-ap-card','widget-kagi-news','widget-google-wind','widget-google-weather-alerts','widget-apple-weather','widget-google-weather','widget-luas-ie'] %}
+                {% set _loc = widget.id in loc_widgets %}
+                {% set _has_refresh = widget.id in refresh_widgets %}
                 <div class="widget-item" style="{{ widget.css }}"
                      {% if _loc and widget.lat is defined %}data-lat="{{ widget.lat }}"{% endif %}
                      {% if _loc and widget.lng is defined %}data-lng="{{ widget.lng }}"{% endif %}

@@ -378,8 +378,7 @@
                     </div>
 
                     <!-- Location (unified dropdown for location-aware widgets) -->
-                    {% set _loc_widget_ids = ['widget-apple-weather','widget-apple-sunrise','widget-apple-clock','widget-apple-clock-analogue-dark','widget-braun-clock','widget-nothing-watch','widget-google-wind','widget-google-weather-alerts','widget-google-weather'] %}
-                    {% if widget.id in _loc_widget_ids and (widget.get('lat') is not none or widget.get('timezone') is not none) %}
+                    {% if widget.id in loc_widgets and (widget.get('lat') is not none or widget.get('timezone') is not none) %}
                     <div class="control-section">
                         <label class="settings-input-label">Location</label>
                         <div style="position:relative;">
@@ -393,17 +392,7 @@
                     {% endif %}
 
                     <!-- Refresh interval -->
-                    {% set _refresh_widgets = {
-                        'widget-google-calendar':       900,
-                        'widget-apple-bbc':             900,
-                        'widget-ap-news':               900,
-                        'widget-ap-card':               300,
-                        'widget-kagi-news':             1800,
-                        'widget-google-wind':           900,
-                        'widget-google-weather-alerts': 900,
-                        'widget-apple-weather':         900,
-                        'widget-google-weather':        900
-                    } %}
+                    {% set _refresh_widgets = refresh_widget_defaults %}
                     {% if widget.id in _refresh_widgets %}
                     {% set _def = _refresh_widgets[widget.id] %}
                     {% set _cur = widget.get('refresh_interval', _def) %}
@@ -411,8 +400,9 @@
                         <label class="settings-input-label">Refresh Interval
                             <span style="float:right;font-weight:400;opacity:0.45;font-size:11px;">default {{ _def }}s</span>
                         </label>
+                        {% set _min60_widgets = ['widget-aljazeera-world-cup', 'widget-luas-ie'] %}
                         <select class="settings-native-select" id="refresh-{{ loop.index0 }}" data-idx="{{ loop.index0 }}">
-                            <option value="30"   {% if _cur == 30   %}selected{% endif %}>30 seconds</option>
+                            {% if widget.id not in _min60_widgets %}<option value="30"   {% if _cur == 30   %}selected{% endif %}>30 seconds</option>{% endif %}
                             <option value="60"   {% if _cur == 60   %}selected{% endif %}>1 minute</option>
                             <option value="120"  {% if _cur == 120  %}selected{% endif %}>2 minutes</option>
                             <option value="300"  {% if _cur == 300  %}selected{% endif %}>5 minutes</option>

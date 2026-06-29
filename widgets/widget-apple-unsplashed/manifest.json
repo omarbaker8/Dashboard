@@ -1,0 +1,27 @@
+{
+    "id": "widget-apple-unsplashed",
+    "name": "Unsplash Photo",
+    "description": "Random curated photography from Unsplash, refreshed daily.",
+    "version": "1.0.0",
+    "grid": {
+        "default": { "w": 4, "h": 4 },
+        "min":     { "w": 2, "h": 2 },
+        "max":     { "w": 8, "h": 8 }
+    },
+    "settings": [],
+    "requires": {
+        "location": false,
+        "api": []
+    },
+    "appearance": {
+        "theme": false,
+        "background": false,
+        "text_color": false,
+        "opacity": true,
+        "blur": false,
+        "border_radius": true,
+        "border": false,
+        "shadow": true,
+        "font_family": false
+    }
+}

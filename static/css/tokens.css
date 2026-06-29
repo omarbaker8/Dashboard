@@ -1,0 +1,54 @@
+/*
+ * Dashboard design tokens — shared CSS custom properties.
+ * Import in any widget stylesheet: @import url('/static/css/tokens.css');
+ */
+
+:root {
+    /* Typography */
+    --w-font-sans:  -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    --w-font-mono:  'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Text scale */
+    --w-text-xs:   3cqmin;
+    --w-text-sm:   3.5cqmin;
+    --w-text-base: 4cqmin;
+    --w-text-lg:   5cqmin;
+    --w-text-xl:   6.5cqmin;
+    --w-text-2xl:  9cqmin;
+    --w-text-3xl:  13cqmin;
+
+    /* Spacing */
+    --w-space-xs:  1.5cqmin;
+    --w-space-sm:  2.5cqmin;
+    --w-space-md:  4cqmin;
+    --w-space-lg:  6cqmin;
+    --w-space-xl:  9cqmin;
+
+    /* Border */
+    --w-border:        1px solid rgba(255,255,255,0.12);
+    --w-border-subtle: 0.3cqmin solid rgba(128,128,128,0.15);
+    --w-radius-sm:     min(12px, 6cqmin);
+    --w-radius-md:     min(20px, 10cqmin);
+    --w-radius-lg:     min(28px, 15cqmin);
+
+    /* Shadows */
+    --w-shadow-soft:   0 2px 8px rgba(0,0,0,0.2);
+    --w-shadow-medium: 0 4px 16px rgba(0,0,0,0.35);
+    --w-shadow-heavy:  0 8px 32px rgba(0,0,0,0.6);
+
+    /* Glass */
+    --w-glass-bg:     rgba(128,128,128,0.15);
+    --w-glass-blur:   40px;
+    --w-glass-border: rgba(255,255,255,0.18);
+
+    /* Semantic text */
+    --w-text-primary:   rgba(255,255,255,0.95);
+    --w-text-secondary: rgba(255,255,255,0.6);
+    --w-text-tertiary:  rgba(255,255,255,0.35);
+    --w-text-accent:    #E5072F;
+
+    /* Status */
+    --w-color-live:    #34d399;
+    --w-color-warning: #ff9500;
+    --w-color-error:   #ff453a;
+}
