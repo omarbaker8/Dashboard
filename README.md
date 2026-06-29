@@ -2,7 +2,7 @@
 
 A minimal, multi-device widget dashboard where any widget can be built by describing it to an LLM. The framework is designed so that Claude, GPT, or any model has everything it needs — a typed manifest, auto-registration, and a clear JS contract — to produce a working widget in one shot.
 
-![Demo](./Showcase.mp4)
+![Demo](https://github.com/user-attachments/assets/4b68a5d4-b448-4b5a-ac23-f0d7f219d4f6)
 
 ---
 
