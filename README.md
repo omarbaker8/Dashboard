@@ -6,6 +6,14 @@ A minimal, multi-device widget dashboard where any widget can be built by descri
 
 ---
 
+## Screenshots
+
+![Dashboard](screenshots/dashboard.png)
+![Settings](screenshots/settings.png)
+![Wallpapers](screenshots/wallpapers.png)
+
+---
+
 ## The idea
 
 Most dashboards are closed systems. This one is a framework first. Every widget is a self-contained folder with three files and a clear contract. You describe what you want to a language model, hand it the guide, and it writes a working widget.
