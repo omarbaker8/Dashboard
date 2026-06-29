@@ -9,6 +9,8 @@ A minimal, multi-device widget dashboard where any widget can be built by descri
 ## Screenshots
 
 ![Dashboard](screenshots/dashboard.png)
+![Example 1](screenshots/example1.png)
+![Example 2](screenshots/example2.png)
 ![Settings](screenshots/settings.png)
 ![Wallpapers](screenshots/wallpapers.png)
 
