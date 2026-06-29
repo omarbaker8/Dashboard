@@ -1,4 +1,4 @@
-# Dashboard
+# Widshot
 
 A minimal, multi-device widget dashboard where any widget can be built by describing it to an LLM. The framework is designed so that Claude, GPT, or any model has everything it needs — a typed manifest, auto-registration, and a clear JS contract — to produce a working widget in one shot.
 
