@@ -15,7 +15,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), 'dashboard.db')
 # ---------------------------------------------------------------------------
 
 _ADJECTIVES = [
-    'amber', 'bold', 'brave', 'bright', 'calm', 'clever', 'cosmic', 'crisp',
+    # 'amber', 'bold', 'brave', 'bright', 'calm', 'clever', 'cosmic', 'crisp',
     'crystal', 'daring', 'dawn', 'deep', 'digital', 'dreamy', 'dusk', 'echo',
     'ember', 'ethereal', 'fading', 'fierce', 'floral', 'flowing', 'foggy',
     'frosty', 'gentle', 'gilded', 'glass', 'glowing', 'golden', 'grand',
@@ -367,7 +367,7 @@ def add_device_widget(device_id, device_type, widget_id, base_widget=None,
         wid = widget_id
         x = bw.get('x', 0)
         y = bw.get('y', 0)
-        w = bw.get('w', 3)
+        # w = bw.get('w', 3)
         h = bw.get('h', 3)
         css = bw.get('css', GLASS_CSS)
         extra = {k: v for k, v in bw.items()
